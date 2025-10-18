@@ -368,7 +368,7 @@ jobs:
           .env
           '@ | Set-Content -Encoding ASCII .gitignore
 
-          # Build workflow na offline ZIP (spúšťa sa na tag)
+          # Build workflow na offline ZIP (bez explicitného GITHUB_TOKEN v env)
           @'
           name: Build Offline Release ZIP
 
@@ -376,6 +376,9 @@ jobs:
             push:
               tags:
                 - "v*"
+
+          permissions:
+            contents: write
 
           jobs:
             build:
@@ -421,8 +424,6 @@ jobs:
                   uses: softprops/action-gh-release@v2
                   with:
                     files: "Perfect-Portable-Converter-${{ github.ref_name }}.zip"
-                  env:
-                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           '@ | Set-Content -Encoding UTF8 ".github/workflows/build-offline-zip.yml"
 
           # config/defaults.json
@@ -443,6 +444,7 @@ jobs:
           git push origin HEAD:main
 
       - name: Create v1.0.0 tag to trigger offline build
+        if: ${{ success() }}
         shell: pwsh
         run: |
           git fetch --tags
