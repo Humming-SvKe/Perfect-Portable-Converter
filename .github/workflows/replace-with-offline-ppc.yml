@@ -1,0 +1,454 @@
+name: Replace repo with OFFLINE PPC (one-shot)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  replace:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace repository with OFFLINE PPC
+        shell: pwsh
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = 'Stop'
+
+          git config user.name  "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+          Write-Host "Wiping repository contents..."
+          git rm -r --cached -q . 2>$null
+          Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+
+          # Create structure
+          $dirs = @(".github/workflows","config","binaries","input","output","subtitles","overlays","thumbnails","logs","temp","licenses/ffmpeg")
+          foreach ($d in $dirs) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
+          foreach ($d in @("binaries","input","output","subtitles","overlays","thumbnails","logs","temp")) {
+            New-Item -ItemType File -Force -Path (Join-Path $d ".gitkeep") | Out-Null
+          }
+
+          # START.bat
+          @'
+          @echo off
+          setlocal EnableDelayedExpansion
+
+          REM Perfect Portable Converter - START
+          REM - Spúšťa hlavný PowerShell engine s UI/menu
+
+          set "SCRIPT_DIR=%~dp0"
+          set "PPC_PS=%SCRIPT_DIR%PPC.ps1"
+
+          powershell -NoProfile -ExecutionPolicy Bypass -File "%PPC_PS%"
+          pause
+          '@ | Set-Content -Encoding ASCII -NoNewline START.bat
+
+          # PPC.ps1
+          @'
+          <#! 
+            Perfect Portable Converter (PPC) - OFFLINE build
+            - FFmpeg frontend s menu a dávkovým workflow
+            - Funkcie: konverzie, titulky (soft/hard), MKV nástroje, watermark, efekty, thumbnails, queue, logy
+          !>
+
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = 'Stop'
+
+          $Root = Split-Path -Parent $PSCommandPath
+          $Bins = Join-Path $Root "binaries"
+          $Logs = Join-Path $Root "logs"
+          $Temp = Join-Path $Root "temp"
+          $In   = Join-Path $Root "input"
+          $Out  = Join-Path $Root "output"
+          $Subs = Join-Path $Root "subtitles"
+          $Ovls = Join-Path $Root "overlays"
+          $Thumb= Join-Path $Root "thumbnails"
+          $Cfg  = Join-Path $Root "config\defaults.json"
+
+          $null = New-Item -ItemType Directory -Force -Path $Bins,$Logs,$Temp,$In,$Out,$Subs,$Ovls,$Thumb | Out-Null
+
+          $LogFile = Join-Path $Logs "ppc.log"
+          function Write-Log($msg) {
+            $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+            "$timestamp | $msg" | Out-File -Append -Encoding UTF8 $LogFile
+            Write-Host $msg
+          }
+
+          # Konfigurácia/profily
+          $Config = @{
+            default_format = "mp4"
+            profiles = @(
+              @{ name="Fast 1080p H264"; vcodec="libx264"; preset="veryfast"; crf=23; acodec="aac"; ab="160k"; scale="" }
+              @{ name="Small 720p H264"; vcodec="libx264"; preset="veryfast"; crf=26; acodec="aac"; ab="128k"; scale="1280:-2" }
+              @{ name="Device WhatsApp H264"; vcodec="libx264"; preset="veryfast"; crf=24; acodec="aac"; ab="128k"; scale="1280:-2"; maxdur=180 }
+            )
+          }
+          if (Test-Path $Cfg) {
+            try { $Config = Get-Content $Cfg -Raw | ConvertFrom-Json } catch { Write-Log "WARN: Chyba pri načítaní configu, používam default." }
+          }
+
+          # FFmpeg detekcia (OFFLINE: očakáva binaries/ffmpeg.exe a ffprobe.exe)
+          $global:FFMPEG = ""; $global:FFPROBE = ""
+          function Resolve-FFTools {
+            $ffLocal = Join-Path $Bins "ffmpeg.exe"
+            $fpLocal = Join-Path $Bins "ffprobe.exe"
+            if (Test-Path $ffLocal) { $global:FFMPEG = $ffLocal }
+            if (Test-Path $fpLocal) { $global:FFPROBE = $fpLocal }
+            if (-not $FFMPEG -or -not $FFPROBE) {
+              Write-Log "OFFLINE build očakáva ffmpeg.exe a ffprobe.exe v 'binaries/'. Stiahni Release ZIP tohto projektu."
+              return $false
+            }
+            return $true
+          }
+
+          function Run-FF([string]$args) {
+            $ffLog = Join-Path $Logs "ffmpeg.log"
+            Write-Log "ffmpeg $args"
+            & $FFMPEG $args 2>&1 | Tee-Object -FilePath $ffLog -Append
+            if ($LASTEXITCODE -ne 0) { throw "FFmpeg skončil s kódom $LASTEXITCODE" }
+          }
+
+          function Build-ScaleArg($scale){ if([string]::IsNullOrWhiteSpace($scale)){ "" } else { "-vf `"scale=$scale`"" } }
+          function Build-SubtitleArgs([string]$Mode,[string]$SubPath,[switch]$IsMKV){
+            if ([string]::IsNullOrWhiteSpace($SubPath) -or -not (Test-Path $SubPath)) { return "" }
+            if ($Mode -eq "hard") { return "-vf `"subtitles=$(($SubPath -replace '\\','/'))`"" }
+            if ($IsMKV) { return "-i `"$SubPath`" -c:s copy -map 0 -map 1:s? " }
+            return "-i `"$SubPath`" -c:s mov_text -map 0 -map 1:s? "
+          }
+          function Build-WatermarkArgs([string]$OverlayPath,[string]$Position="10:10"){
+            if ([string]::IsNullOrWhiteSpace($OverlayPath) -or -not (Test-Path $OverlayPath)) { return "" }
+            return "-i `"$OverlayPath`" -filter_complex `"overlay=$Position`""
+          }
+          function Build-EffectsArgs([string[]]$Effects){
+            if (-not $Effects -or $Effects.Count -eq 0) { return "" }
+            $vf=@()
+            foreach($e in $Effects){
+              switch -Regex($e){
+                "^denoise$"   { $vf+="hqdn3d"; continue }
+                "^sharpen$"   { $vf+="unsharp"; continue }
+                "^grayscale$" { $vf+="format=gray"; continue }
+                "^fps=(\d+)$" { $vf+=$e; continue }
+                "^speed=([\d\.]+)$" {
+                  $rate=[double]$Matches[1]; $vf+="setpts=PTS/$rate"
+                  $a=$rate; $aFilters=@()
+                  while($a -gt 2.0){ $aFilters+="atempo=2.0"; $a=$a/2.0 }
+                  $aFilters+="atempo=$a"
+                  return "-filter_complex `"`"$(($vf -join ','))`",$(($aFilters -join ','))`"`""
+                }
+              }
+            }
+            if($vf.Count -gt 0){ return "-vf `"$($vf -join ',')`"" }
+            return ""
+          }
+
+          function Choose-Profile {
+            Write-Host "`nDostupné profily:"
+            for($i=0;$i -lt $Config.profiles.Count;$i++){ Write-Host ("  [{0}] {1}" -f $i,$Config.profiles[$i].name) }
+            $idx=Read-Host "Zadaj index profilu"; if($idx -as [int] -and $idx -ge 0 -and $idx -lt $Config.profiles.Count){ return $Config.profiles[$idx] }
+            return $Config.profiles[0]
+          }
+
+          function Convert-Batch {
+            if(-not (Resolve-FFTools)){ return }
+            $profile=Choose-Profile
+            $files=Get-ChildItem $In -File -Include *.mp4,*.mkv,*.avi,*.mov,*.webm -Recurse
+            if(-not $files){ Write-Log "INFO: Žiadne vstupné videá v 'input/'"; return }
+
+            $hardSub=Read-Host "Titulky: hard/soft/none (default: none)"; if([string]::IsNullOrWhiteSpace($hardSub)){ $hardSub="none" }
+            $subFile=""
+            if($hardSub -ne "none"){
+              Write-Host "Ak chceš priložiť externé titulky, vlož ich do 'subtitles/' a zadaj názov súboru (SRT/ASS)."
+              $subName=Read-Host "Názov (prázdne = nepoužiť externé)"
+              if(-not [string]::IsNullOrWhiteSpace($subName)){
+                $subPath=Join-Path $Subs $subName
+                if(Test-Path $subPath){ $subFile=$subPath } else { Write-Log "WARN: '$subPath' neexistuje, ignorujem titulky." }
+              }
+            }
+
+            $overlay=""
+            if((Read-Host "Použiť overlay (watermark)? y/N") -match '^(y|Y)'){
+              Write-Host "Umiestni watermark obrázok do 'overlays/' a zadaj jeho názov (png/jpg)."
+              $ovName=Read-Host "Názov (prázdne = žiadny)"
+              if(-not [string]::IsNullOrWhiteSpace($ovName)){
+                $ovPath=Join-Path $Ovls $ovName
+                if(Test-Path $ovPath){ $overlay=$ovPath } else { Write-Log "WARN: '$ovPath' neexistuje, ignorujem overlay." }
+              }
+            }
+
+            $effects=@()
+            $effAsk=Read-Host "Efekty? (denoise,sharpen,grayscale,fps=30,speed=1.25) – oddeľ čiarkou alebo nechaj prázdne"
+            if(-not [string]::IsNullOrWhiteSpace($effAsk)){ $effects=$effAsk.Split(',').ForEach{ $_.Trim() } }
+
+            foreach($f in $files){
+              try{
+                $base=[IO.Path]::GetFileNameWithoutExtension($f.Name)
+                $ext=$Config.default_format
+                $outPath=Join-Path $Out "$base.$ext"
+                $scaleArg=Build-ScaleArg($profile.scale)
+                $isMKV=($ext -eq "mkv")
+                $subArgs= if($hardSub -eq "none"){ "" } else { Build-SubtitleArgs ($(if($hardSub -eq "hard"){"hard"} else {"soft"})) $subFile $isMKV }
+                $wmArgs=Build-WatermarkArgs $overlay
+                $fxArgs=Build-EffectsArgs $effects
+                $maps= if($subArgs -like "*-map*"){ "" } else { "-map 0:v:0? -map 0:a:0?" }
+
+                $vcodec=$profile.vcodec; $preset=$profile.preset; $crf=$profile.crf; $acodec=$profile.acodec; $ab=$profile.ab
+                $hw=Read-Host "Použiť HW encodér (napr. h264_nvenc)? zadaj názov alebo Enter pre soft"
+                if(-not [string]::IsNullOrWhiteSpace($hw)){ $vcodec=$hw }
+
+                $args=@(
+                  "-y","-i `"$($f.FullName)`"",$subArgs,$wmArgs,$fxArgs,$scaleArg,$maps,
+                  "-c:v $vcodec -preset $preset -crf $crf",
+                  "-c:a $acodec -b:a $ab",
+                  "`"$outPath`""
+                ) -join " "
+
+                Run-FF $args
+                Write-Log "OK: $($f.Name) -> $(Split-Path $outPath -Leaf)"
+              } catch {
+                Write-Log "ERROR: $($f.Name) zlyhalo: $($_.Exception.Message)"
+              }
+            }
+            Write-Log "Dávka dokončená."
+          }
+
+          function MKV-Tools {
+            if(-not (Resolve-FFTools)){ return }
+            Write-Host "`nMKV nástroje:"
+            Write-Host "  1) Remux do MKV (bez rekompresie)"
+            Write-Host "  2) Extrahovať audio"
+            Write-Host "  3) Extrahovať titulky"
+            $opt=Read-Host "Voľba"
+            $files=Get-ChildItem $In -File -Include *.mp4,*.mkv,*.mov,*.avi -Recurse
+            if(-not $files){ Write-Log "INFO: Žiadne vstupné súbory"; return }
+
+            foreach($f in $files){
+              try{
+                switch($opt){
+                  "1" { Run-FF ("-y -i `"{0}`" -c copy `"{1}`"" -f $f.FullName -f (Join-Path $Out ("{0}.mkv" -f [IO.Path]::GetFileNameWithoutExtension($f.Name)))) }
+                  "2" { Run-FF ("-y -i `"{0}`" -vn -c copy `"{1}`"" -f $f.FullName -f (Join-Path $Out ("{0}.audio.m4a" -f [IO.Path]::GetFileNameWithoutExtension($f.Name)))) }
+                  "3" { Run-FF ("-y -i `"{0}`" -map 0:s:0? `"{1}`"" -f $f.FullName -f (Join-Path $Out ("{0}.subs.srt" -f [IO.Path]::GetFileNameWithoutExtension($f.Name)))) }
+                  default { Write-Log "Neznáma voľba."; return }
+                }
+                Write-Log "OK: $($f.Name)"
+              } catch {
+                Write-Log "ERROR: $($f.Name) zlyhalo: $($_.Exception.Message)"
+              }
+            }
+          }
+
+          function Thumbnails {
+            if(-not (Resolve-FFTools)){ return }
+            $files=Get-ChildItem $In -File -Include *.mp4,*.mkv,*.avi,*.mov,*.webm -Recurse
+            if(-not $files){ Write-Log "INFO: Žiadne vstupné videá"; return }
+
+            $grid=Read-Host "Mozaika grid (napr. 3x3), Enter = 3x3"; if([string]::IsNullOrWhiteSpace($grid)){ $grid="3x3" }
+            $interval=Read-Host "Interval snímok (sekundy), Enter=10"; if([string]::IsNullOrWhiteSpace($interval)){ $interval="10" }
+            $overlayPath=Join-Path $Ovls "watermark.png"; $useWm=Test-Path $overlayPath
+
+            foreach($f in $files){
+              try{
+                $base=[IO.Path]::GetFileNameWithoutExtension($f.Name)
+                $outThumb=Join-Path $Thumb ("{0}.jpg" -f $base)
+                if($useWm){
+                  Run-FF ("-y -i `"{0}`" -i `"{1}`" -filter_complex `"fps=1/{2},scale=1280:-2,tile={3}[t];[t][1]overlay=10:10`" -frames:v 1 `"{4}`"" -f $f.FullName -f $overlayPath -f $interval -f $grid -f $outThumb)
+                } else {
+                  Run-FF ("-y -i `"{0}`" -vf `"fps=1/{1},scale=1280:-2,tile={2}`" -frames:v 1 `"{3}`"" -f $f.FullName -f $interval -f $grid -f $outThumb)
+                }
+                Write-Log "OK: náhľad $(Split-Path $outThumb -Leaf)"
+              } catch {
+                Write-Log "ERROR: $($f.Name) náhľady zlyhali: $($_.Exception.Message)"
+              }
+            }
+          }
+
+          function Main-Menu {
+            Write-Host ""
+            Write-Host "Perfect Portable Converter"
+            Write-Host "=========================="
+            Write-Host "1) Dávková konverzia (profily, titulky, watermark, efekty)"
+            Write-Host "2) MKV nástroje (remux/extrakcia)"
+            Write-Host "3) Thumbnail/Mozaiky"
+            Write-Host "4) Skontrolovať FFmpeg (cesta, HW akcelerácia)"
+            Write-Host "5) Koniec"
+            $opt=Read-Host "Voľba"
+            switch($opt){
+              "1" { Convert-Batch }
+              "2" { MKV-Tools }
+              "3" { Thumbnails }
+              "4" { if(Resolve-FFTools){ Write-Log "FFmpeg: $FFMPEG"; Write-Log "FFprobe: $FFPROBE"; try{ & $FFMPEG -hwaccels }catch{} } }
+              "5" { return $false }
+              default { Write-Log "Neznáma voľba." }
+            }
+            return $true
+          }
+
+          Write-Log "PPC spustený."
+          while(Main-Menu) { }
+          Write-Log "Koniec."
+
+          # README.md
+          @'
+          # Perfect Portable Converter (offline)
+
+          Plne prenosný nástroj na konverziu videa pomocou FFmpeg, s jedným spúšťacím skriptom. Offline release ZIP obsahuje FFmpeg binárky a všetko potrebné – stačí rozbaliť a spustiť `START.bat`.
+
+          ## Funkcie
+          - Dávková konverzia (MP4/MKV/AVI/…)
+          - Profily (kodek, preset, CRF, škálovanie), voliteľná HW akcelerácia (ak dostupná)
+          - Titulky: soft (mux do MKV/MP4) aj hard (vypálenie), import/export SRT/ASS, výber stôp
+          - MKV nástroje: remux (bez rekompresie), extrakcia stôp (audio, titulky), metadá
+          - Watermark (obrázok/text), základné efekty (denoise, sharpen, grayscale, fps, speed)
+          - Thumbnails/mozaiky s možným overlayom
+          - Queue/logy, portable režim (bez inštalácie)
+
+          ## Použitie (offline release)
+          1. Stiahni najnovší Release ZIP (sekcia Releases).
+          2. Rozbaľ ZIP (napr. na USB).
+          3. Spusť `START.bat`.
+          4. Vkladaj videá do `input/`, titulky do `subtitles/`, overlay do `overlays/`, výstup bude v `output/`.
+
+          ## Build offline release (pre maintainera)
+          GitHub Actions pri vytvorení tagu (napr. `v1.0.0`) stiahnu statický FFmpeg, vložia ho do `binaries/`, priložia licencie a zabalia celý projekt do ZIP, ktorý sa priloží k Release.
+
+          ## Licencie
+          - Kód PPC: MIT (LICENSE).
+          - FFmpeg: podľa upstreamu; licenčné súbory sú priložené v offline ZIPe.
+          '@ | Set-Content -Encoding UTF8 README.md
+
+          # LICENSE
+          @'
+          MIT License
+
+          Copyright (c) 2025 Humming-SvKe
+
+          Permission is hereby granted, free of charge, to any person obtaining a copy
+          of this software and associated documentation files (the "Software"), to deal
+          in the Software without restriction, including without limitation the rights
+          to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+          copies of the Software, and to permit persons to whom the Software is
+          furnished to do so, subject to the following conditions:
+
+          THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+          IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+          FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+          '@ | Set-Content -Encoding UTF8 LICENSE
+
+          # .gitignore
+          @'
+          # OS
+          .DS_Store
+          Thumbs.db
+
+          # Logs and temp
+          logs/
+          *.log
+          temp/
+          *.tmp
+          *.cache
+
+          # Binaries
+          binaries/*.exe
+          binaries/*.dll
+
+          # Build artifacts
+          licenses/
+          *.zip
+
+          # Node etc. (pre istotu)
+          node_modules/
+          dist/
+          build/
+          .env
+          '@ | Set-Content -Encoding ASCII .gitignore
+
+          # Build workflow na offline ZIP (spúšťa sa na tag)
+          @'
+          name: Build Offline Release ZIP
+
+          on:
+            push:
+              tags:
+                - "v*"
+
+          jobs:
+            build:
+              runs-on: windows-latest
+              steps:
+                - name: Checkout
+                  uses: actions/checkout@v4
+
+                - name: Create folders
+                  shell: pwsh
+                  run: |
+                    New-Item -ItemType Directory -Force -Path binaries,logs,temp,input,output,subtitles,overlays,thumbnails,licenses | Out-Null
+
+                - name: Download FFmpeg (release essentials)
+                  shell: pwsh
+                  run: |
+                    $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+                    $zip = "temp\ffmpeg.zip"
+                    Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+                    Expand-Archive -Path $zip -DestinationPath "temp\ffmpeg" -Force
+                    $exe   = Get-ChildItem -Recurse -Filter ffmpeg.exe  -Path "temp\ffmpeg" | Select-Object -First 1
+                    $probe = Get-ChildItem -Recurse -Filter ffprobe.exe -Path "temp\ffmpeg" | Select-Object -First 1
+                    if (-not $exe -or -not $probe) { throw "Nenájdené ffmpeg/ffprobe v balíku." }
+                    Copy-Item $exe.FullName binaries\ffmpeg.exe    -Force
+                    Copy-Item $probe.FullName binaries\ffprobe.exe -Force
+                    New-Item -ItemType Directory -Force -Path licenses\ffmpeg | Out-Null
+                    Get-ChildItem -Recurse -Include LICENSE*,README* -Path "temp\ffmpeg" | ForEach-Object {
+                      Copy-Item $_.FullName licenses\ffmpeg\ -Force
+                    }
+
+                - name: Compose ZIP
+                  shell: pwsh
+                  run: |
+                    $ver = "${{ github.ref_name }}"
+                    $zip = "Perfect-Portable-Converter-$ver.zip"
+                    $items = @(
+                      "START.bat","PPC.ps1",".gitignore","LICENSE","README.md","config",
+                      "binaries","input","output","subtitles","overlays","thumbnails","logs","temp","licenses"
+                    )
+                    Compress-Archive -Path $items -DestinationPath $zip -Force
+
+                - name: Create GitHub Release and upload asset
+                  uses: softprops/action-gh-release@v2
+                  with:
+                    files: "Perfect-Portable-Converter-${{ github.ref_name }}.zip"
+                  env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          '@ | Set-Content -Encoding UTF8 ".github/workflows/build-offline-zip.yml"
+
+          # config/defaults.json
+          @'
+          {
+            "default_format": "mp4",
+            "profiles": [
+              { "name": "Fast 1080p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 23, "acodec": "aac", "ab": "160k", "scale": "" },
+              { "name": "Small 720p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 26, "acodec": "aac", "ab": "128k", "scale": "1280:-2" },
+              { "name": "Device WhatsApp H264", "vcodec": "libx264", "preset": "veryfast", "crf": 24, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "maxdur": 180 }
+            ]
+          }
+          '@ | Set-Content -Encoding UTF8 "config/defaults.json"
+
+          # Commit & push
+          git add -A
+          git commit -m "Replace repo with OFFLINE Perfect Portable Converter v1.0.0"
+          git push origin HEAD:main
+
+      - name: Create v1.0.0 tag to trigger offline build
+        shell: pwsh
+        run: |
+          git fetch --tags
+          if (-not (git tag -l "v1.0.0")) {
+            git tag v1.0.0
+            git push origin v1.0.0
+          } else {
+            Write-Host "Tag v1.0.0 už existuje – preskakujem."
+          }
