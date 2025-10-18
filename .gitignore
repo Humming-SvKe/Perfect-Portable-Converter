@@ -1,0 +1,15 @@
+.DS_Store
+Thumbs.db
+logs/
+*.log
+temp/
+*.tmp
+*.cache
+binaries/*.exe
+binaries/*.dll
+licenses/
+*.zip
+node_modules/
+dist/
+build/
+.env

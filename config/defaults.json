@@ -1,0 +1,8 @@
+{
+  "default_format": "mp4",
+  "profiles": [
+    { "name": "Fast 1080p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 23, "acodec": "aac", "ab": "160k", "scale": "" },
+    { "name": "Small 720p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 26, "acodec": "aac", "ab": "128k", "scale": "1280:-2" },
+    { "name": "Device WhatsApp H264", "vcodec": "libx264", "preset": "veryfast", "crf": 24, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "maxdur": 180 }
+  ]
+}
