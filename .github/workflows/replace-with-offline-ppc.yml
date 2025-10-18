@@ -5,18 +5,23 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   replace:
     runs-on: windows-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout
+      - name: Checkout (full history)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Replace repository with OFFLINE PPC
+      - name: Replace repository with OFFLINE PPC (preserve .github/workflows)
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
           Set-StrictMode -Version Latest
           $ErrorActionPreference = 'Stop'
@@ -24,12 +29,21 @@ jobs:
           git config user.name  "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
 
-          Write-Host "Wiping repository contents..."
-          git rm -r --cached -q . 2>$null
-          Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+          # Sync with remote to avoid non-fast-forward
+          git fetch origin --prune
+          git checkout -B main origin/main
 
-          # Create structure
-          $dirs = @(".github/workflows","config","binaries","input","output","subtitles","overlays","thumbnails","logs","temp","licenses/ffmpeg")
+          # Wipe everything except .git and .github (we keep workflows)
+          Write-Host "Wiping repository contents except .github ..."
+          Get-ChildItem -Force | Where-Object {
+            $_.Name -notin @('.git', '.github')
+          } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+          if (!(Test-Path ".github/workflows")) {
+            New-Item -ItemType Directory -Force -Path ".github/workflows" | Out-Null
+          }
+
+          # Create tree
+          $dirs = @("config","binaries","input","output","subtitles","overlays","thumbnails","logs","temp","licenses/ffmpeg")
           foreach ($d in $dirs) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
           foreach ($d in @("binaries","input","output","subtitles","overlays","thumbnails","logs","temp")) {
             New-Item -ItemType File -Force -Path (Join-Path $d ".gitkeep") | Out-Null
@@ -39,25 +53,20 @@ jobs:
           @'
           @echo off
           setlocal EnableDelayedExpansion
-
           REM Perfect Portable Converter - START
-          REM - Spúšťa hlavný PowerShell engine s UI/menu
-
           set "SCRIPT_DIR=%~dp0"
           set "PPC_PS=%SCRIPT_DIR%PPC.ps1"
-
           powershell -NoProfile -ExecutionPolicy Bypass -File "%PPC_PS%"
           pause
           '@ | Set-Content -Encoding ASCII -NoNewline START.bat
 
-          # PPC.ps1
+          # PPC.ps1 (engine)
           @'
-          <#! 
+          <#!
             Perfect Portable Converter (PPC) - OFFLINE build
             - FFmpeg frontend s menu a dávkovým workflow
             - Funkcie: konverzie, titulky (soft/hard), MKV nástroje, watermark, efekty, thumbnails, queue, logy
           !>
-
           Set-StrictMode -Version Latest
           $ErrorActionPreference = 'Stop'
 
@@ -76,17 +85,17 @@ jobs:
 
           $LogFile = Join-Path $Logs "ppc.log"
           function Write-Log($msg) {
-            $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-            "$timestamp | $msg" | Out-File -Append -Encoding UTF8 $LogFile
+            $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+            "$ts | $msg" | Out-File -Append -Encoding UTF8 $LogFile
             Write-Host $msg
           }
 
-          # Konfigurácia/profily
+          # Defaults / external config
           $Config = @{
             default_format = "mp4"
             profiles = @(
-              @{ name="Fast 1080p H264"; vcodec="libx264"; preset="veryfast"; crf=23; acodec="aac"; ab="160k"; scale="" }
-              @{ name="Small 720p H264"; vcodec="libx264"; preset="veryfast"; crf=26; acodec="aac"; ab="128k"; scale="1280:-2" }
+              @{ name="Fast 1080p H264";      vcodec="libx264"; preset="veryfast"; crf=23; acodec="aac"; ab="160k"; scale="" }
+              @{ name="Small 720p H264";      vcodec="libx264"; preset="veryfast"; crf=26; acodec="aac"; ab="128k"; scale="1280:-2" }
               @{ name="Device WhatsApp H264"; vcodec="libx264"; preset="veryfast"; crf=24; acodec="aac"; ab="128k"; scale="1280:-2"; maxdur=180 }
             )
           }
@@ -94,20 +103,19 @@ jobs:
             try { $Config = Get-Content $Cfg -Raw | ConvertFrom-Json } catch { Write-Log "WARN: Chyba pri načítaní configu, používam default." }
           }
 
-          # FFmpeg detekcia (OFFLINE: očakáva binaries/ffmpeg.exe a ffprobe.exe)
+          # FFmpeg resolve
           $global:FFMPEG = ""; $global:FFPROBE = ""
           function Resolve-FFTools {
-            $ffLocal = Join-Path $Bins "ffmpeg.exe"
-            $fpLocal = Join-Path $Bins "ffprobe.exe"
-            if (Test-Path $ffLocal) { $global:FFMPEG = $ffLocal }
-            if (Test-Path $fpLocal) { $global:FFPROBE = $fpLocal }
+            $ff = Join-Path $Bins "ffmpeg.exe"
+            $fp = Join-Path $Bins "ffprobe.exe"
+            if (Test-Path $ff) { $global:FFMPEG = $ff }
+            if (Test-Path $fp) { $global:FFPROBE = $fp }
             if (-not $FFMPEG -or -not $FFPROBE) {
               Write-Log "OFFLINE build očakáva ffmpeg.exe a ffprobe.exe v 'binaries/'. Stiahni Release ZIP tohto projektu."
               return $false
             }
             return $true
           }
-
           function Run-FF([string]$args) {
             $ffLog = Join-Path $Logs "ffmpeg.log"
             Write-Log "ffmpeg $args"
@@ -292,37 +300,16 @@ jobs:
           Write-Log "PPC spustený."
           while(Main-Menu) { }
           Write-Log "Koniec."
+          '@ | Set-Content -Encoding UTF8 PPC.ps1
 
           # README.md
           @'
           # Perfect Portable Converter (offline)
 
           Plne prenosný nástroj na konverziu videa pomocou FFmpeg, s jedným spúšťacím skriptom. Offline release ZIP obsahuje FFmpeg binárky a všetko potrebné – stačí rozbaliť a spustiť `START.bat`.
-
-          ## Funkcie
-          - Dávková konverzia (MP4/MKV/AVI/…)
-          - Profily (kodek, preset, CRF, škálovanie), voliteľná HW akcelerácia (ak dostupná)
-          - Titulky: soft (mux do MKV/MP4) aj hard (vypálenie), import/export SRT/ASS, výber stôp
-          - MKV nástroje: remux (bez rekompresie), extrakcia stôp (audio, titulky), metadá
-          - Watermark (obrázok/text), základné efekty (denoise, sharpen, grayscale, fps, speed)
-          - Thumbnails/mozaiky s možným overlayom
-          - Queue/logy, portable režim (bez inštalácie)
-
-          ## Použitie (offline release)
-          1. Stiahni najnovší Release ZIP (sekcia Releases).
-          2. Rozbaľ ZIP (napr. na USB).
-          3. Spusť `START.bat`.
-          4. Vkladaj videá do `input/`, titulky do `subtitles/`, overlay do `overlays/`, výstup bude v `output/`.
-
-          ## Build offline release (pre maintainera)
-          GitHub Actions pri vytvorení tagu (napr. `v1.0.0`) stiahnu statický FFmpeg, vložia ho do `binaries/`, priložia licencie a zabalia celý projekt do ZIP, ktorý sa priloží k Release.
-
-          ## Licencie
-          - Kód PPC: MIT (LICENSE).
-          - FFmpeg: podľa upstreamu; licenčné súbory sú priložené v offline ZIPe.
           '@ | Set-Content -Encoding UTF8 README.md
 
-          # LICENSE
+          # LICENSE (MIT)
           @'
           MIT License
 
@@ -345,86 +332,24 @@ jobs:
           # OS
           .DS_Store
           Thumbs.db
-
           # Logs and temp
           logs/
           *.log
           temp/
           *.tmp
           *.cache
-
           # Binaries
           binaries/*.exe
           binaries/*.dll
-
           # Build artifacts
           licenses/
           *.zip
-
-          # Node etc. (pre istotu)
+          # Node etc.
           node_modules/
           dist/
           build/
           .env
           '@ | Set-Content -Encoding ASCII .gitignore
-
-          # Build workflow na offline ZIP (bez explicitného GITHUB_TOKEN v env)
-          @'
-          name: Build Offline Release ZIP
-
-          on:
-            push:
-              tags:
-                - "v*"
-
-          permissions:
-            contents: write
-
-          jobs:
-            build:
-              runs-on: windows-latest
-              steps:
-                - name: Checkout
-                  uses: actions/checkout@v4
-
-                - name: Create folders
-                  shell: pwsh
-                  run: |
-                    New-Item -ItemType Directory -Force -Path binaries,logs,temp,input,output,subtitles,overlays,thumbnails,licenses | Out-Null
-
-                - name: Download FFmpeg (release essentials)
-                  shell: pwsh
-                  run: |
-                    $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
-                    $zip = "temp\ffmpeg.zip"
-                    Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
-                    Expand-Archive -Path $zip -DestinationPath "temp\ffmpeg" -Force
-                    $exe   = Get-ChildItem -Recurse -Filter ffmpeg.exe  -Path "temp\ffmpeg" | Select-Object -First 1
-                    $probe = Get-ChildItem -Recurse -Filter ffprobe.exe -Path "temp\ffmpeg" | Select-Object -First 1
-                    if (-not $exe -or -not $probe) { throw "Nenájdené ffmpeg/ffprobe v balíku." }
-                    Copy-Item $exe.FullName binaries\ffmpeg.exe    -Force
-                    Copy-Item $probe.FullName binaries\ffprobe.exe -Force
-                    New-Item -ItemType Directory -Force -Path licenses\ffmpeg | Out-Null
-                    Get-ChildItem -Recurse -Include LICENSE*,README* -Path "temp\ffmpeg" | ForEach-Object {
-                      Copy-Item $_.FullName licenses\ffmpeg\ -Force
-                    }
-
-                - name: Compose ZIP
-                  shell: pwsh
-                  run: |
-                    $ver = "${{ github.ref_name }}"
-                    $zip = "Perfect-Portable-Converter-$ver.zip"
-                    $items = @(
-                      "START.bat","PPC.ps1",".gitignore","LICENSE","README.md","config",
-                      "binaries","input","output","subtitles","overlays","thumbnails","logs","temp","licenses"
-                    )
-                    Compress-Archive -Path $items -DestinationPath $zip -Force
-
-                - name: Create GitHub Release and upload asset
-                  uses: softprops/action-gh-release@v2
-                  with:
-                    files: "Perfect-Portable-Converter-${{ github.ref_name }}.zip"
-          '@ | Set-Content -Encoding UTF8 ".github/workflows/build-offline-zip.yml"
 
           # config/defaults.json
           @'
@@ -438,10 +363,35 @@ jobs:
           }
           '@ | Set-Content -Encoding UTF8 "config/defaults.json"
 
-          # Commit & push
+          # Commit
           git add -A
           git commit -m "Replace repo with OFFLINE Perfect Portable Converter v1.0.0"
-          git push origin HEAD:main
+
+          # Try push to main, fallback to PR
+          $pushedMain = $true
+          try { git push origin main } catch { $pushedMain = $false }
+          if (-not $pushedMain) {
+            $branch = "ppc/offline-replacement"
+            git push -u origin HEAD:$branch
+
+            # Open PR via API
+            $uri = "https://api.github.com/repos/$env:REPO/pulls"
+            $headers = @{
+              Authorization = "Bearer $env:GH_TOKEN"
+              Accept = "application/vnd.github+json"
+              "X-GitHub-Api-Version" = "2022-11-28"
+            }
+            $body = @{
+              title = "Replace repo with OFFLINE PPC v1.0.0"
+              head  = $branch
+              base  = "main"
+              body  = "Automaticky vytvorený PR: kompletná náhrada obsahu za OFFLINE PPC."
+              draft = $false
+            } | ConvertTo-Json
+            Invoke-RestMethod -Method POST -Uri $uri -Headers $headers -Body $body | Out-Null
+
+            Write-Host "Fallback použitý: vytvorená vetva $branch a otvorený PR."
+          }
 
       - name: Create v1.0.0 tag to trigger offline build
         if: ${{ success() }}
