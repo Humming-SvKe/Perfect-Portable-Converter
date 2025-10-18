@@ -1,0 +1,129 @@
+name: Deep Scan CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.ps1'
+      - '**.psm1'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - '**.ps1'
+      - '**.psm1'
+      - '.github/workflows/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deepscan:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Deep Scan (First Pass)
+        id: scan1
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          .\scripts\deepscan.ps1
+          echo "exit_code=$LASTEXITCODE" >> $env:GITHUB_OUTPUT
+
+      - name: Run Deep Scan (Second Pass - Verification)
+        id: scan2
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          .\scripts\deepscan.ps1
+          echo "exit_code=$LASTEXITCODE" >> $env:GITHUB_OUTPUT
+
+      - name: Check if both passes succeeded
+        shell: pwsh
+        run: |
+          $pass1 = "${{ steps.scan1.outputs.exit_code }}"
+          $pass2 = "${{ steps.scan2.outputs.exit_code }}"
+          
+          Write-Host "Pass 1 exit code: $pass1"
+          Write-Host "Pass 2 exit code: $pass2"
+          
+          if ($pass1 -eq "0" -and $pass2 -eq "0") {
+            Write-Host "✓ Both deep scan passes succeeded - no issues found!"
+            exit 0
+          } else {
+            Write-Host "✗ Deep scan found issues (see logs above)"
+            exit 1
+          }
+
+      - name: Auto-fix and create PR (on failure)
+        if: failure() && github.event_name != 'pull_request'
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = 'Stop'
+          
+          Write-Host "Attempting to auto-fix issues..."
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Run with auto-fix
+          .\scripts\deepscan.ps1 -AutoFix
+          
+          # Check if there are changes
+          $gitStatus = git status --porcelain
+          if (-not $gitStatus) {
+            Write-Host "No auto-fixable changes - issues require manual intervention"
+            exit 0
+          }
+          
+          # Create branch and commit
+          $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+          $branchName = "bot/deepscan-fixes-$timestamp"
+          
+          git checkout -b $branchName
+          git add -A
+          git commit -m "Auto-fix PSScriptAnalyzer issues from deep scan"
+          git push -u origin $branchName
+          
+          # Create PR via GitHub API
+          $uri = "https://api.github.com/repos/${{ github.repository }}/pulls"
+          $headers = @{
+            Authorization = "Bearer $env:GITHUB_TOKEN"
+            Accept = "application/vnd.github+json"
+            "X-GitHub-Api-Version" = "2022-11-28"
+          }
+          $body = @{
+            title = "Auto-fix: PSScriptAnalyzer issues"
+            head  = $branchName
+            base  = "${{ github.ref_name }}"
+            body  = "This PR contains automatic fixes applied by PSScriptAnalyzer from the deep scan CI workflow.`n`nPlease review the changes before merging."
+            draft = $false
+          } | ConvertTo-Json
+          
+          try {
+            $response = Invoke-RestMethod -Method POST -Uri $uri -Headers $headers -Body $body
+            Write-Host "✓ Created PR: $($response.html_url)"
+          }
+          catch {
+            Write-Host "⚠ Could not create PR via API: $($_.Exception.Message)"
+            Write-Host "Branch $branchName has been pushed - create PR manually"
+          }
+
+      - name: Upload scan logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepscan-logs
+          path: logs/deepscan.log
+          if-no-files-found: ignore
