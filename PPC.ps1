@@ -70,7 +70,7 @@ function Build-WatermarkArgs([string]$Overlay,[string]$Pos="10:10"){
   return "-i `"$Overlay`" -filter_complex `"overlay=$Pos`""
 }
 
-# FIXED: previously missing closing brace
+# FIXED: previously missing closing brace + quoting correction
 function Build-EffectsArgs([string[]]$E) {
   if (-not $E -or $E.Count -eq 0) { return " " }
 
@@ -109,9 +109,9 @@ function Convert-Batch {
 
   foreach ($f in $files) {
     try {
-      $rel = Resolve-Path -LiteralPath $f.FullName
+      $rel = (Resolve-Path -LiteralPath $f.FullName).Path
       $destDir = $Out
-      $ext = if ($p.PSObject.Properties.Name -contains 'format' -and $p.format) { $p.format } else { $Config.default_format }
+      $ext = if ($p.format) { $p.format } else { $Config.default_format }
       $outPath = Join-Path $destDir ("{0}.{1}" -f [System.IO.Path]::GetFileNameWithoutExtension($f.Name), $ext)
 
       $v = @()
@@ -125,11 +125,8 @@ function Convert-Batch {
 
       $filters = @()
       if ($p.scale) { $filters += "scale=$($p.scale)" }
-      # Effects example (could be loaded from config later)
-      if ($p.effects) {
-        foreach ($ef in $p.effects) { $filters += $ef }
-      }
-      $vfArg = if ($filters.Count -gt 0) { "-vf `"" + ([string]::Join(",", $filters)) + `"" } else { "" }
+      if ($p.effects) { foreach ($ef in $p.effects) { $filters += $ef } }
+      $vfArg = if ($filters.Count -gt 0) { "-vf `"$([string]::Join(',', $filters))`"" } else { "" }
 
       $args = @(
         "-y",
@@ -168,5 +165,4 @@ function Main-Menu {
 
 Write-Log "PPC spustený."
 while (Main-Menu) { }
-Write-Log "Koniec.
-"
+Write-Log "Koniec."
