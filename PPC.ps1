@@ -29,7 +29,7 @@ $Config = @{
   profiles = @(
     @{ name="Fast 1080p H264"; vcodec="libx264"; preset="veryfast"; crf=23; acodec="aac"; ab="160k"; scale="" },
     @{ name="Small 720p H264"; vcodec="libx264"; preset="veryfast"; crf=25; acodec="aac"; ab="128k"; scale="1280:-2" },
-    @{ name="YouTube 1080p"; vcodec="libx264"; preset="medium"; crf=21; acodec="aac"; ab="192k"; scale="1920:-2" }
+    @{ name="YouTube 1080p"; vcodec="libx264"; preset="medium";  crf=21; acodec="aac"; ab="192k"; scale="1920:-2" }
   )
 }
 if (Test-Path $Cfg) {
@@ -70,7 +70,6 @@ function Build-WatermarkArgs([string]$Overlay,[string]$Pos="10:10"){
   return "-i `"$Overlay`" -filter_complex `"overlay=$Pos`""
 }
 
-# FIXED: previously missing closing brace + quoting correction
 function Build-EffectsArgs([string[]]$E) {
   if (-not $E -or $E.Count -eq 0) { return " " }
 
@@ -95,8 +94,9 @@ function Choose-Profile {
   Write-Host "`nDostupné profily:"
   for ($i=0; $i -lt $Config.profiles.Count; $i++) { Write-Host ("  [{0}] {1}" -f $i, $Config.profiles[$i].name) }
   $idx = Read-Host "Zadaj index profilu"
-  if (-not [int]::TryParse($idx, [ref]([int]$null)) -or $idx -lt 0 -or $idx -ge $Config.profiles.Count) { Write-Log "ERROR: Neplatný výber profilu"; return $null }
-  return $Config.profiles[$idx]
+  $ok = [int]::TryParse($idx, [ref]([int]$null))
+  if (-not $ok -or [int]$idx -lt 0 -or [int]$idx -ge $Config.profiles.Count) { Write-Log "ERROR: Neplatný výber profilu"; return $null }
+  return $Config.profiles[[int]$idx]
 }
 
 function Convert-Batch {
@@ -110,14 +110,13 @@ function Convert-Batch {
   foreach ($f in $files) {
     try {
       $rel = (Resolve-Path -LiteralPath $f.FullName).Path
-      $destDir = $Out
-      $ext = if ($p.format) { $p.format } else { $Config.default_format }
-      $outPath = Join-Path $destDir ("{0}.{1}" -f [System.IO.Path]::GetFileNameWithoutExtension($f.Name), $ext)
+      $ext = if ($p.PSObject.Properties.Name -contains 'format' -and $p.format) { $p.format } else { $Config.default_format }
+      $outPath = Join-Path $Out ("{0}.{1}" -f [System.IO.Path]::GetFileNameWithoutExtension($f.Name), $ext)
 
       $v = @()
       if ($p.vcodec) { $v += "-c:v $($p.vcodec)" }
       if ($p.preset) { $v += "-preset $($p.preset)" }
-      if ($p.crf -ne $null) { $v += "-crf $($p.crf)" }
+      if ($null -ne $p.crf) { $v += "-crf $($p.crf)" }
 
       $a = @()
       if ($p.acodec) { $a += "-c:a $($p.acodec)" }
@@ -126,20 +125,24 @@ function Convert-Batch {
       $filters = @()
       if ($p.scale) { $filters += "scale=$($p.scale)" }
       if ($p.effects) { foreach ($ef in $p.effects) { $filters += $ef } }
-      $vfArg = if ($filters.Count -gt 0) { "-vf `"$([string]::Join(',', $filters))`"" } else { "" }
 
-      $args = @(
+      $vfArg = ""
+      if ($filters.Count -gt 0) {
+        $vfArg = "-vf `"$([string]::Join(',', $filters))`""
+      }
+
+      $parts = @(
         "-y",
         "-hide_banner",
         "-loglevel warning",
         "-i `"$rel`"",
         $vfArg,
-        $v -join ' ',
-        $a -join ' ',
-        "`"$outPath`"
-      ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        ($v -join ' '),
+        ($a -join ' '),
+        "`$outPath`"
+      ) | Where-Object { $_ -and -not [string]::IsNullOrWhiteSpace($_) }
 
-      Run-FF ($args -join ' ')
+      Run-FF ($parts -join ' ')
       Write-Log "OK: $($f.Name) -> $([System.IO.Path]::GetFileName($outPath))"
     }
     catch {
