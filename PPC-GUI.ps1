@@ -1,4 +1,4 @@
-<# Perfect Portable Converter (PPC) - GUI (WinForms, PS5.1 safe) #>
+<# Perfect Portable Converter (PPC) - GUI (WinForms, PS5.1 safe, verified output) #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -20,6 +20,7 @@ $Cfg   = Join-Path $Root 'config\defaults.json'
 
 $null = New-Item -ItemType Directory -Force -Path $Bins,$Logs,$Temp,$Out | Out-Null
 $LogFile = Join-Path $Logs 'ppc.log'
+$FFLog  = Join-Path $Logs 'ffmpeg.log'
 
 function Write-Log([string]$m){
   $ts=(Get-Date).ToString('yyyy-MM-dd HH:mm:ss'); "$ts | $m" | Out-File -Append -Encoding UTF8 $LogFile
@@ -84,10 +85,18 @@ function Build-Args($p, [string]$src, [string]$dst){
 
 function Convert-One([string]$src,[string]$dst,$p){
   if (-not (Resolve-FFTools)) { return $false }
+  # Ensure output directory exists (user may have changed it)
+  $outDir = Split-Path -Parent $dst; if ($outDir -and -not (Test-Path $outDir)) { New-Item -ItemType Directory -Force -Path $outDir | Out-Null }
+
   $args = Build-Args -p $p -src $src -dst $dst
   Write-Log ('ffmpeg ' + ($args -join ' '))
-  & $global:FFMPEG @args 2>&1 | Tee-Object -FilePath (Join-Path $Logs 'ffmpeg.log') -Append | Out-Null
-  return ($LASTEXITCODE -eq 0)
+  & $global:FFMPEG @args 2>&1 | Tee-Object -FilePath $FFLog -Append | Out-Null
+
+  if ($LASTEXITCODE -ne 0) { Write-Log ('FFmpeg failed with code ' + $LASTEXITCODE); return $false }
+  if (-not (Test-Path -LiteralPath $dst)) { Write-Log ('FAIL: Output file not created: ' + $dst); return $false }
+  $fi = Get-Item -LiteralPath $dst -ErrorAction SilentlyContinue
+  if ($null -eq $fi -or [int64]$fi.Length -le 0) { Write-Log ('FAIL: Output appears empty: ' + $dst); return $false }
+  return $true
 }
 
 # GUI
@@ -121,17 +130,29 @@ $btnStart.Add_Click({
   if ($lst.Items.Count -eq 0){ [System.Windows.Forms.MessageBox]::Show('Add at least one file.'); return }
   if ($cmbProf.SelectedIndex -lt 0){ [System.Windows.Forms.MessageBox]::Show('Select a profile.'); return }
   $p = $Config.profiles[$cmbProf.SelectedIndex]
-  foreach($it in $lst.Items){
-    try{
-      $src = [string]$it
-      $ext = if ($p.PSObject.Properties.Name -contains 'format' -and $p.format) { $p.format } else { $Config.default_format }
-      $dst = Join-Path $script:Out ('{0}.{1}' -f [IO.Path]::GetFileNameWithoutExtension($src), $ext)
-      $ok = Convert-One -src $src -dst $dst -p $p
-      $msg = if($ok){('OK: {0} -> {1}' -f [IO.Path]::GetFileName($src), [IO.Path]::GetFileName($dst))}{('FAIL: {0}' -f [IO.Path]::GetFileName($src))}
-      $log.AppendText($msg + [Environment]::NewLine); Write-Log $msg
-    } catch { $log.AppendText(('FAIL: ' + $_.Exception.Message) + [Environment]::NewLine); Write-Log ('FAIL: ' + $_.Exception.Message) }
+
+  # Disable UI during processing
+  $btnAdd.Enabled=$false; $btnOut.Enabled=$false; $btnStart.Enabled=$false; $cmbProf.Enabled=$false
+  $form.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+  $okCount=0; $failCount=0
+  try {
+    foreach($it in $lst.Items){
+      try{
+        $src = [string]$it
+        $ext = if ($p.PSObject.Properties.Name -contains 'format' -and $p.format) { $p.format } else { $Config.default_format }
+        $dst = Join-Path $script:Out ('{0}.{1}' -f [IO.Path]::GetFileNameWithoutExtension($src), $ext)
+        $ok = Convert-One -src $src -dst $dst -p $p
+        if ($ok) { $okCount++; $msg = ('OK: {0} -> {1}' -f [IO.Path]::GetFileName($src), $dst) }
+        else { $failCount++; $msg = ('FAIL: {0} -> see logs/ffmpeg.log' -f [IO.Path]::GetFileName($src)) }
+        $log.AppendText($msg + [Environment]::NewLine); Write-Log $msg
+      } catch { $failCount++; $em = 'FAIL: ' + $_.Exception.Message; $log.AppendText($em + [Environment]::NewLine); Write-Log $em }
+    }
   }
-  [System.Windows.Forms.MessageBox]::Show('Done.')
+  finally {
+    $form.Cursor = [System.Windows.Forms.Cursors]::Default
+    $btnAdd.Enabled=$true; $btnOut.Enabled=$true; $btnStart.Enabled=$true; $cmbProf.Enabled=$true
+  }
+  [System.Windows.Forms.MessageBox]::Show(('Completed. OK: {0}, FAIL: {1}' -f $okCount, $failCount))
 })
 
 # Ensure tools are present on form load
