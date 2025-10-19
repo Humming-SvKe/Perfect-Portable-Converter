@@ -1,4 +1,4 @@
-<# Perfect Portable Converter (PPC) - OFFLINE build (auto FFmpeg download, ASCII-safe) #>
+<# Perfect Portable Converter (PPC) - OFFLINE build (auto FFmpeg download, ASCII-safe, latest git build) #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
@@ -34,7 +34,7 @@ function Expand-Zip([string]$Zip,[string]$Dest){
 
 # Default config (overridden by config\defaults.json when present)
 $Config = @{
-default_format = "mp4";
+  default_format = "mp4";
   profiles = @(
     @{ name="Fast 1080p H264";  vcodec="libx264"; preset="veryfast"; crf=23; acodec="aac"; ab="160k"; scale="" },
     @{ name="Small 720p H264"; vcodec="libx264"; preset="veryfast"; crf=25; acodec="aac"; ab="128k"; scale="1280:-2" },
@@ -45,27 +45,35 @@ if (Test-Path $Cfg) { try { $Config = Get-Content $Cfg -Raw | ConvertFrom-Json }
 
 $global:FFMPEG=""; $global:FFPROBE=""
 function Install-FFTools {
-  try {
-    $zip = Join-Path $Temp "ffmpeg.zip"
-    $dst = Join-Path $Temp "ffmpeg"
-    if (Test-Path $zip) { Remove-Item $zip -Force -ErrorAction SilentlyContinue }
-    if (Test-Path $dst) { Remove-Item $dst -Recurse -Force -ErrorAction SilentlyContinue }
-    New-Item -ItemType Directory -Force -Path $dst | Out-Null
-    # Use Gyan.dev essentials build for smaller size
-    $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
-    Download-File -Url $url -Dst $zip
-    Expand-Zip -Zip $zip -Dest $dst
-    $ff = Get-ChildItem -LiteralPath $dst -Recurse -Filter ffmpeg.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-    $fp = Get-ChildItem -LiteralPath $dst -Recurse -Filter ffprobe.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($ff) { Copy-Item -LiteralPath $ff.FullName -Destination (Join-Path $Bins "ffmpeg.exe") -Force }
-    if ($fp) { Copy-Item -LiteralPath $fp.FullName -Destination (Join-Path $Bins "ffprobe.exe") -Force }
-    Remove-Item $zip -Force -ErrorAction SilentlyContinue
-    Remove-Item $dst -Recurse -Force -ErrorAction SilentlyContinue
-    return $true
-  } catch {
-    Write-Log ("ERROR: FFmpeg download/install failed: " + $_.Exception.Message)
-    return $false
+  $urls = @(
+    # Latest nightly (master) build with many fixes (zip)
+    'https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-gpl.zip',
+    # Stable release fallback
+    'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
+  )
+  foreach ($url in $urls) {
+    try {
+      $zip = Join-Path $Temp "ffmpeg.zip"
+      $dst = Join-Path $Temp "ffmpeg"
+      if (Test-Path $zip) { Remove-Item $zip -Force -ErrorAction SilentlyContinue }
+      if (Test-Path $dst) { Remove-Item $dst -Recurse -Force -ErrorAction SilentlyContinue }
+      New-Item -ItemType Directory -Force -Path $dst | Out-Null
+      Download-File -Url $url -Dst $zip
+      Expand-Zip -Zip $zip -Dest $dst
+      $ff = Get-ChildItem -LiteralPath $dst -Recurse -Filter ffmpeg.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+      $fp = Get-ChildItem -LiteralPath $dst -Recurse -Filter ffprobe.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+      if ($ff) { Copy-Item -LiteralPath $ff.FullName -Destination (Join-Path $Bins "ffmpeg.exe") -Force }
+      if ($fp) { Copy-Item -LiteralPath $fp.FullName -Destination (Join-Path $Bins "ffprobe.exe") -Force }
+      Remove-Item $zip -Force -ErrorAction SilentlyContinue
+      Remove-Item $dst -Recurse -Force -ErrorAction SilentlyContinue
+      Write-Log ("FFmpeg installed from: " + $url)
+      return $true
+    } catch {
+      Write-Log ("WARN: FFmpeg install attempt failed from " + $url + ": " + $_.Exception.Message)
+    }
   }
+  Write-Log "ERROR: All FFmpeg install attempts failed."
+  return $false
 }
 
 function Resolve-FFTools {
@@ -87,7 +95,7 @@ function Run-FF([string[]]$Args){
   $ffLog = Join-Path $Logs "ffmpeg.log"
   Write-Log ("ffmpeg " + ($Args -join ' '))
   & $FFMPEG @Args 2>&1 | Tee-Object -FilePath $ffLog -Append | Out-Null
-  if ($LASTEXITCODE -ne 0) { throw "FFmpeg exited with code $LASTEXITCODE" }
+  return $LASTEXITCODE
 }
 
 function Choose-Profile {
@@ -95,21 +103,6 @@ function Choose-Profile {
   $idx = Read-Host "Enter profile index"
   $n=[int]0; if (-not [int]::TryParse($idx,[ref]$n) -or $n -lt 0 -or $n -ge $Config.profiles.Count){ Write-Log "ERROR: Invalid profile index"; return $null }
   return $Config.profiles[$n]
-}
-
-function Build-EffectsChain([string[]]$E){
-  if (-not $E -or $E.Count -eq 0) { return "" }
-  $vf=@()
-  foreach($x in $E){ $t=(""+$x).Trim().ToLower(); switch -Regex($t){
-    "^denoise$"     { $vf+="hqdn3d" }
-    "^sharpen$"     { $vf+="unsharp" }
-    "^grayscale$"   { $vf+="format=gray" }
-    "^deinterlace$" { $vf+="yadif" }
-    "^stabilize$"   { $vf+="deshake" }
-    default {}
-  } }
-  if ($vf.Count -eq 0) { return "" }
-  return ([string]::Join(',', $vf))
 }
 
 function Convert-Batch {
@@ -124,6 +117,7 @@ function Convert-Batch {
       $rel = (Resolve-Path -LiteralPath $f.FullName).Path
       $ext = if ($p.PSObject.Properties.Name -contains 'format' -and $p.format) { $p.format } else { $Config.default_format }
       $outPath = Join-Path $Out ("{0}.{1}" -f [IO.Path]::GetFileNameWithoutExtension($f.Name), $ext)
+      if (Test-Path $outPath) { Remove-Item -LiteralPath $outPath -Force -ErrorAction SilentlyContinue }
 
       # Video args
       $vArgs=@(); if ($p.vcodec) { $vArgs += @('-c:v', "$($p.vcodec)") }
@@ -140,12 +134,17 @@ function Convert-Batch {
       $vfArgs=@(); $chain = if ($filters.Count -gt 0) { [string]::Join(',', $filters) } else { '' }
       if ($chain) { $vfArgs = @('-vf', $chain) }
 
-      $args = @('-y','-hide_banner','-loglevel','warning','-i', $rel) + $vfArgs + $vArgs + $aArgs + @($outPath)
-      Run-FF $args
+      $args = @('-y','-nostdin','-hide_banner','-loglevel','warning','-i', $rel) + $vfArgs + $vArgs + $aArgs + @($outPath)
+      $code = Run-FF $args
+      if ($code -ne 0) { throw "FFmpeg exited with code $code" }
+      if (-not (Test-Path -LiteralPath $outPath)) { throw "Output not created" }
+      $fi = Get-Item -LiteralPath $outPath -ErrorAction SilentlyContinue
+      if ($null -eq $fi -or [int64]$fi.Length -le 0) { throw "Output is empty" }
       Write-Log ("OK: {0} -> {1}" -f $f.Name, [IO.Path]::GetFileName($outPath))
     }
     catch {
       Write-Log ("FAIL: {0} -> {1}" -f $f.Name, $_.Exception.Message)
+      if (Test-Path -LiteralPath $outPath) { try { $sz=(Get-Item -LiteralPath $outPath).Length; if ($sz -eq 0) { Remove-Item -LiteralPath $outPath -Force -ErrorAction SilentlyContinue } } catch {} }
     }
   }
 }
