@@ -35,20 +35,32 @@ def convert_file(input_path: str, output_path: str, operation: str, **kwargs):
         operation: Operation to apply (uppercase, lowercase, replace)
         **kwargs: Additional arguments for operations (e.g., pattern, replacement for replace)
     """
-    with open(input_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+    try:
+        with open(input_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Input file not found: {input_path}")
+    except IOError as e:
+        raise IOError(f"Error reading input file {input_path}: {e}")
     
     if operation == 'uppercase':
         result = op_uppercase(content)
     elif operation == 'lowercase':
         result = op_lowercase(content)
     elif operation == 'replace':
-        result = op_replace(content, kwargs.get('pattern', ''), kwargs.get('replacement', ''))
+        pattern = kwargs.get('pattern', '')
+        if not pattern:
+            raise ValueError("Pattern is required for replace operation")
+        result = op_replace(content, pattern, kwargs.get('replacement', ''))
     else:
         raise ValueError(f"Unknown operation: {operation}")
     
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(result)
+    try:
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(result)
+    except IOError as e:
+        raise IOError(f"Error writing output file {output_path}: {e}")
+
 
 
 def make_parser() -> argparse.ArgumentParser:
