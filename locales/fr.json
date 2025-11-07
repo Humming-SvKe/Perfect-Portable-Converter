@@ -1,0 +1,15 @@
+{
+  "app.title": "Perfect Portable Converter",
+  "app.subtitle": "Gestion d'entrepôt",
+  "nav.dashboard": "Tableau de bord",
+  "nav.inventory": "Inventaire",
+  "nav.orders": "Commandes",
+  "nav.reports": "Rapports",
+  "nav.settings": "Paramètres",
+  "widget.summary.title": "Résumé",
+  "widget.topitems.title": "Meilleurs articles",
+  "action.create": "Créer",
+  "action.edit": "Modifier",
+  "action.delete": "Supprimer",
+  "msg.no_data": "Aucune donnée disponible"
+}

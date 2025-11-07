@@ -1,0 +1,15 @@
+{
+  "app.title": "Perfect Portable Converter",
+  "app.subtitle": "Warehouse management",
+  "nav.dashboard": "Dashboard",
+  "nav.inventory": "Inventory",
+  "nav.orders": "Orders",
+  "nav.reports": "Reports",
+  "nav.settings": "Settings",
+  "widget.summary.title": "Summary",
+  "widget.topitems.title": "Top items",
+  "action.create": "Create",
+  "action.edit": "Edit",
+  "action.delete": "Delete",
+  "msg.no_data": "No data available"
+}

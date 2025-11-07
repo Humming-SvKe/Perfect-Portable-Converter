@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard UI demo</title>
+  <link rel="stylesheet" href="ui/themes.css" />
+  <style>
+    .title { font-size: 18px; font-weight:700; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .content { padding: 24px; }
+    ul { padding-left: 16px; margin: 8px 0; }
+  </style>
+</head>
+<body data-theme="light" data-skin="default">
+  <header class="header">
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="title">Perfect Portable Converter</div>
+      <div class="muted">— Warehouse management</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button id="themeBtn" class="btn">Toggle theme</button>
+      <button id="skinBtn" class="btn">Toggle skin</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar card">
+      <div class="muted">Navigation</div>
+      <ul>
+        <li>Dashboard</li>
+        <li>Inventory</li>
+        <li>Orders</li>
+        <li>Reports</li>
+        <li>Settings</li>
+      </ul>
+    </aside>
+
+    <main class="content">
+      <div class="card">
+        <h3>Summary</h3>
+        <p class="muted">Quick overview of stock and orders.</p>
+      </div>
+      <div style="height:16px"></div>
+      <div class="card">
+        <h4>Top items</h4>
+        <p class="muted">List of highest-moving items.</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const themeBtn = document.getElementById('themeBtn');
+    const skinBtn = document.getElementById('skinBtn');
+    themeBtn.onclick = () => {
+      const el = document.body;
+      el.setAttribute('data-theme', el.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    };
+    skinBtn.onclick = () => {
+      const el = document.body;
+      el.setAttribute('data-skin', el.getAttribute('data-skin') === 'green' ? 'default' : 'green');
+    };
+  </script>
+</body>
+</html>

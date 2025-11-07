@@ -1,0 +1,15 @@
+{
+  "app.title": "Perfect Portable Converter",
+  "app.subtitle": "Riadenie skladu",
+  "nav.dashboard": "Nástenka",
+  "nav.inventory": "Sklad",
+  "nav.orders": "Objednávky",
+  "nav.reports": "Správy",
+  "nav.settings": "Nastavenia",
+  "widget.summary.title": "Prehľad",
+  "widget.topitems.title": "Top položky",
+  "action.create": "Vytvoriť",
+  "action.edit": "Upraviť",
+  "action.delete": "Odstrániť",
+  "msg.no_data": "Žiadne dáta"
+}

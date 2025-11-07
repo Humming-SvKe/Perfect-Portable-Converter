@@ -1,0 +1,6 @@
+:root[data-skin="green"] {
+  --accent: #10b981;
+  --surface-1: #f7fff9;
+  --text-1: #05201a;
+  --card-bg: rgba(255,255,255,0.95);
+}
