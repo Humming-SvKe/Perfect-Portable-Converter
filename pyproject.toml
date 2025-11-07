@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "perfect-portable-converter"
+version = "0.1.0"
+description = "Minimal scaffold for a portable converter CLI"
+authors = [{name = "Humming-SvKe"}]
+readme = "README.md"
+requires-python = ">=3.8"
+
+[project.scripts]
+ppc = "ppc.cli:main"
