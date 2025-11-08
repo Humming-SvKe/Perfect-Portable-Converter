@@ -14,7 +14,7 @@ This is a complete rewrite and enhancement of Perfect Portable Converter with al
 - **PPC-Core.ps1** - New modular core library with advanced functions
 - **Hardware Acceleration Detection** - Automatic detection of NVIDIA NVENC, Intel Quick Sync, AMD AMF
 - **Video Information Extraction** - Detailed video/audio/subtitle analysis using FFprobe
-- **18+ Conversion Profiles** - Comprehensive profile collection for all use cases
+- **20+ Conversion Profiles** - Comprehensive profile collection for all use cases
 
 #### MKV Management
 - **Track Extraction** - Extract video, audio, and subtitle tracks from MKV files
@@ -62,7 +62,7 @@ This is a complete rewrite and enhancement of Perfect Portable Converter with al
 
 #### Configuration
 - **Enhanced defaults.json** - Comprehensive configuration schema
-- **Profile Definitions** - 18 pre-configured profiles
+- **Profile Definitions** - 20 pre-configured profiles
 - **Filter Presets** - Deinterlace, denoise, sharpen filters
 - **Hardware Settings** - Hardware acceleration preferences
 - **Custom Profile Support** - Easy profile creation and modification
@@ -121,16 +121,18 @@ This is a complete rewrite and enhancement of Perfect Portable Converter with al
 10. iPhone/iPad - Apple device compatibility
 11. Android Phone - Android device optimization
 12. Device WhatsApp H264 - WhatsApp message format (max 3min)
+13. Telegram Free - Optimized for Telegram free accounts (under 2GB)
+14. Telegram Premium - Optimized for Telegram Premium (under 4GB)
 
 #### Hardware Acceleration Profiles
-13. NVIDIA H264 Fast - NVENC hardware encoding (H.264)
-14. NVIDIA H265 Fast - NVENC hardware encoding (H.265)
-15. Intel QSV H264 - Intel Quick Sync (H.264)
-16. Intel QSV H265 - Intel Quick Sync (H.265)
-17. AMD AMF H264 - AMD hardware encoding
+15. NVIDIA H264 Fast - NVENC hardware encoding (H.264)
+16. NVIDIA H265 Fast - NVENC hardware encoding (H.265)
+17. Intel QSV H264 - Intel Quick Sync (H.264)
+18. Intel QSV H265 - Intel Quick Sync (H.265)
+19. AMD AMF H264 - AMD hardware encoding
 
 #### Special Profiles
-18. Audio Only - Extract audio to M4A format
+20. Audio Only - Extract audio to M4A format
 
 ### 🔒 Security
 - Input path validation

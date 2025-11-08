@@ -45,7 +45,7 @@ This document provides a comprehensive summary of the implementation of all feat
 
 - [x] **Enhanced Configuration System**
   - JSON-based configuration
-  - 18 conversion profiles
+  - 20 conversion profiles
   - Filter presets
   - Hardware acceleration settings
 
@@ -388,7 +388,7 @@ This document provides a comprehensive summary of the implementation of all feat
 | Správa súborov | ✅ Complete | Full file management in both CLI and GUI |
 | MKV manažment | ✅ Complete | Extract and merge tracks |
 | Vodoznaky | ✅ Complete | Image and text watermarks with positioning |
-| Konverzné profily | ✅ Complete | 18 comprehensive profiles |
+| Konverzné profily | ✅ Complete | 20 comprehensive profiles |
 | Hardvérová akcelerácia | ✅ Complete | NVIDIA, Intel, AMD support |
 | Audio/video spracovanie | ✅ Complete | Full codec and filter support |
 | Titulky | ✅ Complete | Burn, extract, convert subtitles |
@@ -416,7 +416,7 @@ This document provides a comprehensive summary of the implementation of all feat
 - Consistent user experience across both interfaces
 
 ### 3. Comprehensive Feature Set
-- 18 conversion profiles covering all use cases
+- 20 conversion profiles covering all use cases
 - Hardware acceleration for 3 major GPU vendors
 - Complete MKV toolset
 - Full watermark capabilities
@@ -480,7 +480,7 @@ Perfect-Portable-Converter/
 ├── LICENSE                    # License
 ├── .gitignore                 # Git ignore rules
 ├── config/
-│   └── defaults.json          # 18 profiles + settings
+│   └── defaults.json          # 20 profiles + settings
 ├── binaries/
 │   ├── .gitkeep
 │   └── [FFmpeg auto-downloads here]
@@ -521,7 +521,7 @@ Perfect-Portable-Converter/
 ### Innovation
 - **First-class Hardware Acceleration** - Native GPU support
 - **Unified Core Module** - Reusable across CLI and GUI
-- **Comprehensive Profiles** - 18 ready-to-use profiles
+- **Comprehensive Profiles** - 20 ready-to-use profiles
 - **Professional GUI** - Enterprise-quality interface
 
 ### User Experience
@@ -546,7 +546,7 @@ Perfect Portable Converter v2.0 Enhanced Edition successfully implements **100% 
 - File management
 - MKV management
 - Watermarks (image & text)
-- 18 conversion profiles
+- 20 conversion profiles
 - Hardware acceleration (NVIDIA, Intel, AMD)
 - Audio/video processing
 - Subtitles (burn, extract, convert)

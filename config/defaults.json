@@ -8,6 +8,8 @@
     { "name": "Fast 1080p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 23, "acodec": "aac", "ab": "160k", "scale": "", "format": "mp4" },
     { "name": "Small 720p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 26, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "format": "mp4" },
     { "name": "Device WhatsApp H264", "vcodec": "libx264", "preset": "veryfast", "crf": 24, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "maxdur": 180, "format": "mp4" },
+    { "name": "Telegram Free (under 2GB)", "vcodec": "libx264", "preset": "medium", "crf": 23, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "format": "mp4", "maxsize": "2000M" },
+    { "name": "Telegram Premium (under 4GB)", "vcodec": "libx265", "preset": "medium", "crf": 22, "acodec": "aac", "ab": "160k", "scale": "1920:-2", "format": "mp4", "maxsize": "3900M" },
     { "name": "High Quality 1080p H265", "vcodec": "libx265", "preset": "medium", "crf": 22, "acodec": "aac", "ab": "192k", "scale": "1920:-2", "format": "mp4" },
     { "name": "Ultra 4K H265", "vcodec": "libx265", "preset": "slow", "crf": 20, "acodec": "aac", "ab": "256k", "scale": "3840:-2", "format": "mp4" },
     { "name": "YouTube 1080p", "vcodec": "libx264", "preset": "medium", "crf": 21, "acodec": "aac", "ab": "192k", "scale": "1920:-2", "format": "mp4" },

@@ -49,7 +49,7 @@ Perfect-Portable-Converter/
 
 ### 1. Batch Konverzia
 - Spracovanie viacerých súborov súčasne
-- Výber z 18+ vopred definovaných profilov
+- Výber z 20+ vopred definovaných profilov
 - Sledovanie pokroku a štatistiky
 - Automatická optimalizácia veľkosti súboru
 
@@ -104,6 +104,8 @@ Automatická detekcia a využitie:
 | iPhone/iPad | Apple zariadenia |
 | Android Phone | Android telefóny |
 | Device WhatsApp H264 | WhatsApp správy (max 3 min) |
+| Telegram Free | Telegram (pod 2GB limit) |
+| Telegram Premium | Telegram Premium (pod 4GB limit) |
 | Web VP9 1080p | Webové prehrávanie |
 
 ### Hardware Acceleration
@@ -293,7 +295,7 @@ Pri problémoch:
 - **Offline First**: Funguje bez internetu
 - **Portable**: Žiadna inštalácia potrebná
 - **Výkonné**: Hardvérová akcelerácia
-- **Flexibilné**: 18+ profilov
+- **Flexibilné**: 20+ profilov
 - **Jednoduché**: GUI aj CLI rozhranie
 - **Profesionálne**: Pokročilé funkcie
 
