@@ -2,6 +2,64 @@
 
 All notable changes to Perfect Portable Converter will be documented in this file.
 
+## [2.1.0-Themed] - 2024-11-08
+
+### 🎨 Theme System Added
+
+#### New Features
+- **6 Color Themes** - 3 skins with day/night modes each
+  - Classic Day/Night (Blue/Navy)
+  - Modern Day/Night (Green/Teal)
+  - Professional Day/Night (Orange/Purple)
+- **Theme Manager Module (PPC-Themes.ps1)** - Complete theme management system
+- **Dynamic Theme Switching** - Change themes without restart in GUI
+- **Persistent Theme Settings** - Your theme choice is saved
+- **Themed CLI** - Color-coded menus based on selected theme
+- **Themed GUI** - All Windows Forms components follow theme
+
+### 🚀 Advanced Tools Added
+
+#### HandBrake-Inspired Features
+- **2-Pass Encoding** - Better quality at target bitrate
+- **Advanced Video Filters**
+  - Deinterlace, Denoise, Sharpen, Deblock
+  - Brightness/Contrast/Saturation adjustment
+  - Rotate (90°, 180°, 270°)
+- **Audio Processing**
+  - Volume adjustment (dB)
+  - Speed control (0.5x-2.0x)
+  - Audio normalization (EBU R128)
+  - Bass/Treble boost
+- **Chapter Markers** - Add custom chapters to MKV files
+
+#### Apowersoft-Inspired Features
+- **File Size Predictor** - Calculate output size before encoding
+- **Optimal Bitrate Calculator** - Find bitrate for target file size
+- **Batch Templates** - Apply settings to multiple files at once
+
+### 📱 New Social Media Profiles
+
+#### Instagram (3 profiles)
+- Instagram Story (9:16, 15s, 4MB limit)
+- Instagram Post (1:1, 60s, 100MB limit)
+- Instagram Reel (9:16, 90s, 100MB limit)
+
+#### Discord (2 profiles)
+- Discord Basic (8MB limit)
+- Discord Nitro (50MB limit)
+
+### ⚡ Enhancements
+- **CLI**: New [7] Advanced Tools menu with 6 sub-tools
+- **CLI**: New [9] Theme Settings menu
+- **GUI**: Theme selector in Info & Settings tab
+- **Total Profiles**: Increased from 20 to 25
+
+### 📊 Statistics
+- **New Functions**: 7 advanced processing functions
+- **New Module**: PPC-Themes.ps1 (200+ lines)
+- **New Config**: themes.json with 6 theme definitions
+- **Total Code**: 4,500+ lines PowerShell
+
 ## [2.0.0-Enhanced] - 2024
 
 ### 🎉 Major Release - Complete Feature Overhaul

@@ -14,7 +14,12 @@ Perfect Portable Converter je komplexné riešenie na konverziu a spracovanie vi
 - ✅ **Titulky** - Vypálenie titulkov do videa, konverzia formátov
 - ✅ **Video Nástroje** - Strihanie, spájanie, generovanie náhľadov
 - ✅ **Hardvérová Akcelerácia** - Podpora NVIDIA NVENC, Intel Quick Sync, AMD AMF
-- ✅ **18+ Konverzných Profilov** - Pre rôzne účely a zariadenia
+- ✅ **25 Konverzných Profilov** - Pre rôzne účely a zariadenia (YouTube, Telegram, Instagram, Discord, WhatsApp)
+- ✅ **6 Tém (Day/Night)** - Classic, Modern, Professional skins s tmavým/svetlým režimom
+- ✅ **2-Pass Encoding** - Pre lepšiu kvalitu pri cieľovom bitrate
+- ✅ **Pokročilé Filtre** - Brightness, contrast, denoise, sharpen, rotate
+- ✅ **Audio Processing** - Volume, speed, normalization, bass/treble
+- ✅ **File Size Tools** - Predictor a kalkulátor optimálneho bitrate
 - ✅ **Plne Offline** - Žiadne internetové pripojenie nie je potrebné
 
 ## 🚀 Rýchly Štart
@@ -32,11 +37,13 @@ Perfect-Portable-Converter/
 ├── PPC.ps1              # CLI verzia s pokročilým menu
 ├── PPC-GUI.ps1          # GUI verzia s tabuľkami
 ├── PPC-Core.ps1         # Základný modul s funkciami
+├── PPC-Themes.ps1       # Theme manager modul
 ├── START.bat            # Spúšťač aplikácie
 ├── REPORT.bat           # Diagnostický nástroj
 ├── binaries/            # FFmpeg nástroje (auto-download)
 ├── config/
-│   └── defaults.json    # Konfigurácia a profily
+│   ├── defaults.json    # Konfigurácia a profily
+│   └── themes.json      # Témy farieb
 ├── input/               # Vstupné video súbory
 ├── output/              # Výstupné súbory
 ├── subtitles/           # SRT, ASS, VTT titulky
@@ -106,6 +113,11 @@ Automatická detekcia a využitie:
 | Device WhatsApp H264 | WhatsApp správy (max 3 min) |
 | Telegram Free | Telegram (pod 2GB limit) |
 | Telegram Premium | Telegram Premium (pod 4GB limit) |
+| Instagram Story | Instagram Story (9:16, 15s, 4MB) |
+| Instagram Post | Instagram Post (1:1, 60s, 100MB) |
+| Instagram Reel | Instagram Reel (9:16, 90s, 100MB) |
+| Discord Basic | Discord (8MB limit) |
+| Discord Nitro | Discord Nitro (50MB limit) |
 | Web VP9 1080p | Webové prehrávanie |
 
 ### Hardware Acceleration
@@ -128,13 +140,35 @@ Automatická detekcia a využitie:
 - Watermark - Vodoznaky
 - Subtitles - Titulky
 - Video Tools - Nástroje
-- Info & Settings - Informácie
+- Info & Settings - Informácie + výber témy
 
 ### CLI (PPC.ps1)
 - **Interaktívne menu**
 - Všetky funkcie dostupné cez klávesnicu
+- Advanced Tools - 2-pass, filtre, audio processing
+- Theme Settings - výber a zmena témy
 - Ideálne pre pokročilých používateľov
 - Podpora dávkových skriptov
+
+## 🎨 Témy (Themes)
+
+**6 farebných schém (3 skins × 2 režimy)**:
+
+### Classic (Blue/Navy)
+- **Day Mode** - Svetlé pozadie, modrý akcent
+- **Night Mode** - Tmavé pozadie, cyan akcent
+
+### Modern (Green/Teal)
+- **Day Mode** - Svetlé pozadie, zelený akcent
+- **Night Mode** - Tmavé pozadie, zeleno-cyan akcent
+
+### Professional (Orange/Purple)
+- **Day Mode** - Svetlé pozadie, oranžový akcent
+- **Night Mode** - Tmavé pozadie, oranžovo-fialový akcent
+
+**Zmena témy**:
+- **CLI**: Menu položka [9] Theme Settings
+- **GUI**: Info & Settings tab → Theme dropdown → Apply Theme button
 
 ## ⚙️ Technické Špecifikácie
 
