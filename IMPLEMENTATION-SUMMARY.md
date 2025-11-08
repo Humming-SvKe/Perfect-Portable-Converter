@@ -49,18 +49,21 @@ This document provides a comprehensive summary of the implementation of all feat
   - NEW: Batch templates
   - NEW: Chapter markers
 
-- [x] **PPC-Themes.ps1** - NEW Theme manager module
-  - 6 themes (3 skins × 2 modes)
+- [x] **PPC-Themes.ps1** - NEW Theme manager module (v2.2)
+  - 8 themes (3 classic skins × 2 modes + 2 Material themes)
+  - Classic, Modern, Professional (Day/Night)
+  - Material Dark, Material Blue (new modern themes)
+  - Enhanced visual styling (borders, hover effects, padding)
   - Theme loading/saving
   - CLI themed colors
-  - GUI theme application
+  - GUI theme application with Material Design elements
 
 - [x] **Enhanced Configuration System**
   - JSON-based configuration
   - 25 conversion profiles (was 20)
   - Filter presets
   - Hardware acceleration settings
-  - NEW: themes.json with 6 theme definitions
+  - NEW: themes.json with 8 theme definitions (v2.2: added Material themes)
   - NEW: Instagram profiles (Story, Post, Reel)
   - NEW: Discord profiles (Basic, Nitro)
 

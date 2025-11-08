@@ -156,6 +156,62 @@
         "textbox_bg": "#424242",
         "textbox_fg": "#FAFAFA"
       }
+    },
+    "material_dark": {
+      "name": "Material Dark",
+      "type": "dark",
+      "cli": {
+        "background": "Black",
+        "foreground": "White",
+        "primary": "Cyan",
+        "secondary": "Blue",
+        "success": "Green",
+        "warning": "Yellow",
+        "error": "Red",
+        "info": "Magenta"
+      },
+      "gui": {
+        "background": "#121212",
+        "foreground": "#E0E0E0",
+        "primary": "#1E88E5",
+        "secondary": "#26C6DA",
+        "button_bg": "#1E1E1E",
+        "button_fg": "#FFFFFF",
+        "tab_bg": "#1C1C1C",
+        "tab_fg": "#FFFFFF",
+        "textbox_bg": "#1E1E1E",
+        "textbox_fg": "#FFFFFF",
+        "accent": "#00BCD4",
+        "border": "#2D2D2D"
+      }
+    },
+    "material_blue": {
+      "name": "Material Blue",
+      "type": "dark",
+      "cli": {
+        "background": "Black",
+        "foreground": "White",
+        "primary": "Blue",
+        "secondary": "Cyan",
+        "success": "Green",
+        "warning": "Yellow",
+        "error": "Red",
+        "info": "Magenta"
+      },
+      "gui": {
+        "background": "#0D1117",
+        "foreground": "#C9D1D9",
+        "primary": "#3B82F6",
+        "secondary": "#60A5FA",
+        "button_bg": "#161B22",
+        "button_fg": "#C9D1D9",
+        "tab_bg": "#1C2128",
+        "tab_fg": "#C9D1D9",
+        "textbox_bg": "#0D1117",
+        "textbox_fg": "#C9D1D9",
+        "accent": "#3B82F6",
+        "border": "#30363D"
+      }
     }
   }
 }

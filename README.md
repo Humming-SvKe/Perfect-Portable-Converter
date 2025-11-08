@@ -15,7 +15,7 @@ Perfect Portable Converter je komplexné riešenie na konverziu a spracovanie vi
 - ✅ **Video Nástroje** - Strihanie, spájanie, generovanie náhľadov
 - ✅ **Hardvérová Akcelerácia** - Podpora NVIDIA NVENC, Intel Quick Sync, AMD AMF
 - ✅ **25 Konverzných Profilov** - Pre rôzne účely a zariadenia (YouTube, Telegram, Instagram, Discord, WhatsApp)
-- ✅ **6 Tém (Day/Night)** - Classic, Modern, Professional skins s tmavým/svetlým režimom
+- ✅ **8 Tém (Day/Night + Material)** - Classic, Modern, Professional, Material Dark, Material Blue skins
 - ✅ **2-Pass Encoding** - Pre lepšiu kvalitu pri cieľovom bitrate
 - ✅ **Pokročilé Filtre** - Brightness, contrast, denoise, sharpen, rotate
 - ✅ **Audio Processing** - Volume, speed, normalization, bass/treble

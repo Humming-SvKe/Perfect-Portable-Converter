@@ -2,20 +2,37 @@
 
 All notable changes to Perfect Portable Converter will be documented in this file.
 
-## [2.1.0-Themed] - 2024-11-08
+## [2.2.0-MaterialUI] - 2024-11-08
 
-### 🎨 Theme System Added
+### 🎨 Material Design Themes Added
 
 #### New Features
-- **6 Color Themes** - 3 skins with day/night modes each
+- **8 Color Themes** - 3 classic skins + 2 new Material Design themes
   - Classic Day/Night (Blue/Navy)
   - Modern Day/Night (Green/Teal)
   - Professional Day/Night (Orange/Purple)
+  - **NEW: Material Dark** (Deep black, cyan accents, modern borders)
+  - **NEW: Material Blue** (GitHub-inspired dark theme, blue accents)
+- **Enhanced Theme Engine** - Improved visual styling
+  - Subtle borders on Material themes
+  - Mouse hover effects on buttons
+  - Accent colors for headers and important elements
+  - Better padding and spacing
+  - Enhanced progress bars with theme colors
 - **Theme Manager Module (PPC-Themes.ps1)** - Complete theme management system
 - **Dynamic Theme Switching** - Change themes without restart in GUI
 - **Persistent Theme Settings** - Your theme choice is saved
 - **Themed CLI** - Color-coded menus based on selected theme
 - **Themed GUI** - All Windows Forms components follow theme
+
+## [2.1.0-Themed] - 2024-11-08
+
+### 🎨 Theme System Added (Initial Release)
+
+#### Features
+- 6 Color Themes - 3 skins with day/night modes
+- Theme management infrastructure
+- CLI and GUI theme support
 
 ### 🚀 Advanced Tools Added
 
