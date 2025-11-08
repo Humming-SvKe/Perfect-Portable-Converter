@@ -456,7 +456,12 @@ function Process-Audio {
         $audioFilters += "treble=g=$($settings.treble)"
     }
     
-    $af = if ($audioFilters.Count -gt 0) { "-af `"$($audioFilters -join ',')"`" } else { "" }
+    $af = if ($audioFilters.Count -gt 0) { 
+        $filterString = $audioFilters -join ','
+        "-af `"$filterString`""
+    } else { 
+        ""
+    }
     
     try {
         $args = "-y -i `"$input`" $af -c:v copy `"$output`""
