@@ -17,6 +17,7 @@ $Ovls  = Join-Path $Root "overlays"
 $Thumb = Join-Path $Root "thumbnails"
 $Cfg   = Join-Path $Root "config\defaults.json"
 $CoreModule = Join-Path $Root "PPC-Core.ps1"
+$ThemeModule = Join-Path $Root "PPC-Themes.ps1"
 
 $null = New-Item -ItemType Directory -Force -Path $Bins,$Logs,$Temp,$In,$Out,$Subs,$Ovls,$Thumb | Out-Null
 $LogFile = Join-Path $Logs "ppc.log"
@@ -83,6 +84,19 @@ if (Test-Path $CoreModule) {
   }
 } else {
   $script:CoreModuleLoaded = $false
+}
+
+# Load theme module if available
+if (Test-Path $ThemeModule) {
+  try {
+    . $ThemeModule
+    $script:ThemeModuleLoaded = $true
+  } catch {
+    Write-Log "WARN: Theme module load failed: $($_.Exception.Message)"
+    $script:ThemeModuleLoaded = $false
+  }
+} else {
+  $script:ThemeModuleLoaded = $false
 }
 
 $global:FFMPEG=""; $global:FFPROBE=""
@@ -723,20 +737,324 @@ function Hardware-Info {
   & $global:FFMPEG -version | Select-Object -First 1
 }
 
+function Advanced-Tools {
+  if (-not $script:CoreModuleLoaded) {
+    Write-Host "Core module required for advanced tools." -ForegroundColor Red
+    Read-Host "Press Enter"
+    return
+  }
+  
+  Write-Host ""
+  Write-Host "╔══════════════════════════════════════╗" -ForegroundColor Cyan
+  Write-Host "║  Advanced Tools                       ║" -ForegroundColor Cyan
+  Write-Host "╚══════════════════════════════════════╝" -ForegroundColor Cyan
+  Write-Host ""
+  Write-Host " [1] 2-Pass Encoding (Better Quality)" -ForegroundColor Green
+  Write-Host " [2] Apply Video Filters" -ForegroundColor White
+  Write-Host " [3] Process Audio (Volume/Speed/Normalize)" -ForegroundColor White
+  Write-Host " [4] File Size Predictor" -ForegroundColor White
+  Write-Host " [5] Calculate Optimal Bitrate" -ForegroundColor White
+  Write-Host " [6] Add Chapter Markers" -ForegroundColor White
+  Write-Host " [0] Back" -ForegroundColor Red
+  Write-Host ""
+  
+  $o = Read-Host "Choice"
+  switch ($o) {
+    '1' { Tool-2Pass }
+    '2' { Tool-VideoFilters }
+    '3' { Tool-AudioProcess }
+    '4' { Tool-FileSizePredictor }
+    '5' { Tool-OptimalBitrate }
+    '6' { Tool-ChapterMarkers }
+    '0' { return }
+    default { Write-Host "Invalid choice." -ForegroundColor Red; Read-Host "Press Enter" }
+  }
+}
+
+function Tool-2Pass {
+  Write-Host "`n2-Pass Encoding Tool" -ForegroundColor Cyan
+  Write-Host "Provides better quality at target bitrate`n"
+  
+  $input = Read-Host "Input file path"
+  if (-not (Test-Path $input)) {
+    Write-Host "File not found." -ForegroundColor Red
+    Read-Host "Press Enter"
+    return
+  }
+  
+  $output = Read-Host "Output file path"
+  $bitrate = Read-Host "Target video bitrate (kbps, e.g., 2000)"
+  
+  Write-Host "`nStarting 2-pass encoding..." -ForegroundColor Yellow
+  
+  if (Convert-Video2Pass -input $input -output $output -targetBitrate ([int]$bitrate)) {
+    Write-Host "`n✓ 2-pass encoding completed!" -ForegroundColor Green
+  } else {
+    Write-Host "`n✗ 2-pass encoding failed." -ForegroundColor Red
+  }
+  
+  Read-Host "`nPress Enter to continue"
+}
+
+function Tool-VideoFilters {
+  Write-Host "`nVideo Filters Tool" -ForegroundColor Cyan
+  Write-Host "Apply filters: brightness, contrast, saturation, rotate, denoise, sharpen`n"
+  
+  $input = Read-Host "Input file path"
+  if (-not (Test-Path $input)) {
+    Write-Host "File not found." -ForegroundColor Red
+    Read-Host "Press Enter"
+    return
+  }
+  
+  $output = Read-Host "Output file path"
+  
+  $filters = @{}
+  
+  Write-Host "`nSelect filters to apply:"
+  if ((Read-Host "Deinterlace? (y/n)") -eq 'y') { $filters.deinterlace = $true }
+  if ((Read-Host "Denoise? (y/n)") -eq 'y') { $filters.denoise = $true }
+  if ((Read-Host "Sharpen? (y/n)") -eq 'y') { $filters.sharpen = $true }
+  if ((Read-Host "Deblock? (y/n)") -eq 'y') { $filters.deblock = $true }
+  
+  $brightness = Read-Host "Brightness (-1.0 to 1.0, 0=no change)"
+  if ($brightness -and $brightness -ne '0') { $filters.brightness = [double]$brightness }
+  
+  $contrast = Read-Host "Contrast (0.0 to 2.0, 1=no change)"
+  if ($contrast -and $contrast -ne '1') { $filters.contrast = [double]$contrast }
+  
+  $saturation = Read-Host "Saturation (0.0 to 3.0, 1=no change)"
+  if ($saturation -and $saturation -ne '1') { $filters.saturation = [double]$saturation }
+  
+  $rotate = Read-Host "Rotate (0/90/180/270)"
+  if ($rotate -and $rotate -ne '0') { $filters.rotate = [int]$rotate }
+  
+  if ($filters.Count -eq 0) {
+    Write-Host "No filters selected." -ForegroundColor Yellow
+    Read-Host "Press Enter"
+    return
+  }
+  
+  Write-Host "`nApplying filters..." -ForegroundColor Yellow
+  
+  if (Apply-VideoFilters -input $input -output $output -filters $filters) {
+    Write-Host "`n✓ Filters applied!" -ForegroundColor Green
+  } else {
+    Write-Host "`n✗ Filter application failed." -ForegroundColor Red
+  }
+  
+  Read-Host "`nPress Enter to continue"
+}
+
+function Tool-AudioProcess {
+  Write-Host "`nAudio Processing Tool" -ForegroundColor Cyan
+  Write-Host "Adjust volume, speed, normalize, bass/treble`n"
+  
+  $input = Read-Host "Input file path"
+  if (-not (Test-Path $input)) {
+    Write-Host "File not found." -ForegroundColor Red
+    Read-Host "Press Enter"
+    return
+  }
+  
+  $output = Read-Host "Output file path"
+  
+  $settings = @{}
+  
+  Write-Host "`nAudio settings:"
+  $volume = Read-Host "Volume adjustment (dB, e.g., -5, 0, +3)"
+  if ($volume -and $volume -ne '0') { $settings.volume = [double]$volume }
+  
+  $speed = Read-Host "Speed (0.5-2.0, 1.0=normal)"
+  if ($speed -and $speed -ne '1' -and $speed -ne '1.0') { $settings.speed = [double]$speed }
+  
+  if ((Read-Host "Normalize audio? (y/n)") -eq 'y') { $settings.normalize = $true }
+  
+  $bass = Read-Host "Bass boost (dB, 0=no change)"
+  if ($bass -and $bass -ne '0') { $settings.bass = [double]$bass }
+  
+  $treble = Read-Host "Treble boost (dB, 0=no change)"
+  if ($treble -and $treble -ne '0') { $settings.treble = [double]$treble }
+  
+  if ($settings.Count -eq 0) {
+    Write-Host "No audio processing selected." -ForegroundColor Yellow
+    Read-Host "Press Enter"
+    return
+  }
+  
+  Write-Host "`nProcessing audio..." -ForegroundColor Yellow
+  
+  if (Process-Audio -input $input -output $output -settings $settings) {
+    Write-Host "`n✓ Audio processed!" -ForegroundColor Green
+  } else {
+    Write-Host "`n✗ Audio processing failed." -ForegroundColor Red
+  }
+  
+  Read-Host "`nPress Enter to continue"
+}
+
+function Tool-FileSizePredictor {
+  Write-Host "`nFile Size Predictor" -ForegroundColor Cyan
+  Write-Host "Predict output file size based on bitrate`n"
+  
+  $input = Read-Host "Input file path"
+  if (-not (Test-Path $input)) {
+    Write-Host "File not found." -ForegroundColor Red
+    Read-Host "Press Enter"
+    return
+  }
+  
+  $videoBitrate = Read-Host "Target video bitrate (kbps)"
+  $audioBitrate = Read-Host "Target audio bitrate (kbps, default 160)"
+  
+  if (-not $audioBitrate) { $audioBitrate = 160 }
+  
+  $predictedSize = Predict-FileSize -input $input -targetBitrate ([int]$videoBitrate) -audioBitrate ([int]$audioBitrate)
+  
+  Write-Host "`nPredicted output size: $predictedSize MB" -ForegroundColor Green
+  
+  Read-Host "`nPress Enter to continue"
+}
+
+function Tool-OptimalBitrate {
+  Write-Host "`nOptimal Bitrate Calculator" -ForegroundColor Cyan
+  Write-Host "Calculate bitrate needed for target file size`n"
+  
+  $input = Read-Host "Input file path"
+  if (-not (Test-Path $input)) {
+    Write-Host "File not found." -ForegroundColor Red
+    Read-Host "Press Enter"
+    return
+  }
+  
+  $targetSize = Read-Host "Target file size (MB)"
+  $audioBitrate = Read-Host "Audio bitrate (kbps, default 160)"
+  
+  if (-not $audioBitrate) { $audioBitrate = 160 }
+  
+  $optimalBitrate = Get-OptimalBitrate -input $input -targetSizeMB ([double]$targetSize) -audioBitrate ([int]$audioBitrate)
+  
+  Write-Host "`nOptimal video bitrate: $optimalBitrate kbps" -ForegroundColor Green
+  
+  Read-Host "`nPress Enter to continue"
+}
+
+function Tool-ChapterMarkers {
+  Write-Host "`nChapter Markers Tool" -ForegroundColor Cyan
+  Write-Host "Add chapter markers to video`n"
+  
+  $input = Read-Host "Input file path"
+  if (-not (Test-Path $input)) {
+    Write-Host "File not found." -ForegroundColor Red
+    Read-Host "Press Enter"
+    return
+  }
+  
+  $output = Read-Host "Output file path"
+  
+  $chapters = @()
+  Write-Host "`nEnter chapters (leave time empty to finish):"
+  
+  while ($true) {
+    $time = Read-Host "Chapter time (HH:MM:SS)"
+    if (-not $time) { break }
+    
+    $title = Read-Host "Chapter title"
+    
+    $chapters += @{ time = $time; title = $title }
+  }
+  
+  if ($chapters.Count -eq 0) {
+    Write-Host "No chapters defined." -ForegroundColor Yellow
+    Read-Host "Press Enter"
+    return
+  }
+  
+  Write-Host "`nAdding chapters..." -ForegroundColor Yellow
+  
+  if (Add-ChapterMarkers -input $input -output $output -chapters $chapters) {
+    Write-Host "`n✓ Chapters added!" -ForegroundColor Green
+  } else {
+    Write-Host "`n✗ Failed to add chapters." -ForegroundColor Red
+  }
+  
+  Read-Host "`nPress Enter to continue"
+}
+
+function Theme-Settings {
+  Write-Host ""
+  Write-Host "╔══════════════════════════════════════╗" -ForegroundColor Cyan
+  Write-Host "║  Theme Settings                       ║" -ForegroundColor Cyan
+  Write-Host "╚══════════════════════════════════════╝" -ForegroundColor Cyan
+  Write-Host ""
+  
+  if (-not $script:ThemeModuleLoaded) {
+    Write-Host "Theme module not loaded." -ForegroundColor Yellow
+    Read-Host "Press Enter to return"
+    return
+  }
+  
+  $themes = Get-AvailableThemes
+  $config = Load-ThemeConfig
+  
+  Write-Host "Current theme: $($config.themes.($config.current_theme).name)" -ForegroundColor Green
+  Write-Host ""
+  Write-Host "Available themes:" -ForegroundColor White
+  
+  $index = 1
+  foreach ($theme in $themes) {
+    $typeColor = if ($theme.type -eq "dark") { "Cyan" } else { "Yellow" }
+    Write-Host " [$index] $($theme.name) ($($theme.type))" -ForegroundColor $typeColor
+    $index++
+  }
+  
+  Write-Host " [0] Back" -ForegroundColor Red
+  Write-Host ""
+  
+  $choice = Read-Host "Select theme"
+  
+  if ($choice -eq '0') { return }
+  
+  $themeIndex = [int]$choice - 1
+  if ($themeIndex -ge 0 -and $themeIndex -lt $themes.Count) {
+    $selectedTheme = $themes[$themeIndex]
+    if (Set-Theme -themeName $selectedTheme.id) {
+      Write-Host "Theme changed successfully!" -ForegroundColor Green
+      Write-Host "Restart PPC to see full theme changes." -ForegroundColor Yellow
+    }
+  } else {
+    Write-Host "Invalid selection." -ForegroundColor Red
+  }
+  
+  Read-Host "Press Enter to continue"
+}
+
 function Main-Menu {
   Write-Host ""
-  Write-Host "╔════════════════════════════════════════╗" -ForegroundColor Cyan
-  Write-Host "║  Perfect Portable Converter - Enhanced ║" -ForegroundColor Cyan
-  Write-Host "╚════════════════════════════════════════╝" -ForegroundColor Cyan
+  
+  # Use themed colors if available
+  $primaryColor = if ($script:ThemeModuleLoaded -and $global:CURRENT_THEME) {
+    $global:CURRENT_THEME.cli.primary
+  } else { "Cyan" }
+  
+  $secondaryColor = if ($script:ThemeModuleLoaded -and $global:CURRENT_THEME) {
+    $global:CURRENT_THEME.cli.secondary
+  } else { "Green" }
+  
+  Write-Host "╔════════════════════════════════════════╗" -ForegroundColor $primaryColor
+  Write-Host "║  Perfect Portable Converter - Enhanced ║" -ForegroundColor $primaryColor
+  Write-Host "╚════════════════════════════════════════╝" -ForegroundColor $primaryColor
   Write-Host ""
-  Write-Host " [1] Batch Convert Videos" -ForegroundColor Green
+  Write-Host " [1] Batch Convert Videos" -ForegroundColor $secondaryColor
   Write-Host " [2] Video Information" -ForegroundColor White
   Write-Host " [3] MKV Manager" -ForegroundColor White
   Write-Host " [4] Watermark Tool" -ForegroundColor White
   Write-Host " [5] Subtitle Tool" -ForegroundColor White
   Write-Host " [6] Video Tools (Trim/Concat/Thumbnail)" -ForegroundColor White
-  Write-Host " [7] Hardware Acceleration Info" -ForegroundColor White
-  Write-Host " [8] Exit" -ForegroundColor Red
+  Write-Host " [7] Advanced Tools (2-Pass, Filters, Audio)" -ForegroundColor White
+  Write-Host " [8] Hardware Acceleration Info" -ForegroundColor White
+  Write-Host " [9] Theme Settings" -ForegroundColor Magenta
+  Write-Host " [0] Exit" -ForegroundColor Red
   Write-Host ""
   
   $o = Read-Host "Choice"
@@ -747,8 +1065,10 @@ function Main-Menu {
     '4' { Watermark-Tool }
     '5' { Subtitle-Tool }
     '6' { Video-Tools }
-    '7' { Hardware-Info }
-    '8' { return $false }
+    '7' { Advanced-Tools }
+    '8' { Hardware-Info }
+    '9' { Theme-Settings }
+    '0' { return $false }
     default { Write-Host "Invalid choice." -ForegroundColor Red }
   }
   return $true

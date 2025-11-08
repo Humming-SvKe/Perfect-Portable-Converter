@@ -1,0 +1,161 @@
+{
+  "current_theme": "classic_day",
+  "themes": {
+    "classic_day": {
+      "name": "Classic Day",
+      "type": "light",
+      "cli": {
+        "background": "White",
+        "foreground": "Black",
+        "primary": "Blue",
+        "secondary": "Cyan",
+        "success": "Green",
+        "warning": "Yellow",
+        "error": "Red",
+        "info": "Magenta"
+      },
+      "gui": {
+        "background": "#F0F0F0",
+        "foreground": "#000000",
+        "primary": "#0078D4",
+        "secondary": "#0099BC",
+        "button_bg": "#FFFFFF",
+        "button_fg": "#000000",
+        "tab_bg": "#E0E0E0",
+        "tab_fg": "#000000",
+        "textbox_bg": "#FFFFFF",
+        "textbox_fg": "#000000"
+      }
+    },
+    "classic_night": {
+      "name": "Classic Night",
+      "type": "dark",
+      "cli": {
+        "background": "Black",
+        "foreground": "White",
+        "primary": "Cyan",
+        "secondary": "Blue",
+        "success": "Green",
+        "warning": "Yellow",
+        "error": "Red",
+        "info": "Magenta"
+      },
+      "gui": {
+        "background": "#1E1E1E",
+        "foreground": "#FFFFFF",
+        "primary": "#0078D4",
+        "secondary": "#0099BC",
+        "button_bg": "#2D2D2D",
+        "button_fg": "#FFFFFF",
+        "tab_bg": "#252525",
+        "tab_fg": "#FFFFFF",
+        "textbox_bg": "#2D2D2D",
+        "textbox_fg": "#FFFFFF"
+      }
+    },
+    "modern_day": {
+      "name": "Modern Day",
+      "type": "light",
+      "cli": {
+        "background": "White",
+        "foreground": "Black",
+        "primary": "Green",
+        "secondary": "Cyan",
+        "success": "Green",
+        "warning": "Yellow",
+        "error": "Red",
+        "info": "Blue"
+      },
+      "gui": {
+        "background": "#F5F5F5",
+        "foreground": "#212121",
+        "primary": "#4CAF50",
+        "secondary": "#00BCD4",
+        "button_bg": "#FFFFFF",
+        "button_fg": "#212121",
+        "tab_bg": "#E8F5E9",
+        "tab_fg": "#212121",
+        "textbox_bg": "#FFFFFF",
+        "textbox_fg": "#212121"
+      }
+    },
+    "modern_night": {
+      "name": "Modern Night",
+      "type": "dark",
+      "cli": {
+        "background": "Black",
+        "foreground": "White",
+        "primary": "Green",
+        "secondary": "Cyan",
+        "success": "Green",
+        "warning": "Yellow",
+        "error": "Red",
+        "info": "Blue"
+      },
+      "gui": {
+        "background": "#263238",
+        "foreground": "#ECEFF1",
+        "primary": "#4CAF50",
+        "secondary": "#00BCD4",
+        "button_bg": "#37474F",
+        "button_fg": "#ECEFF1",
+        "tab_bg": "#2C393F",
+        "tab_fg": "#ECEFF1",
+        "textbox_bg": "#37474F",
+        "textbox_fg": "#ECEFF1"
+      }
+    },
+    "professional_day": {
+      "name": "Professional Day",
+      "type": "light",
+      "cli": {
+        "background": "White",
+        "foreground": "Black",
+        "primary": "DarkYellow",
+        "secondary": "Magenta",
+        "success": "Green",
+        "warning": "Yellow",
+        "error": "Red",
+        "info": "Cyan"
+      },
+      "gui": {
+        "background": "#FAFAFA",
+        "foreground": "#212121",
+        "primary": "#FF6F00",
+        "secondary": "#9C27B0",
+        "button_bg": "#FFFFFF",
+        "button_fg": "#212121",
+        "tab_bg": "#FFF3E0",
+        "tab_fg": "#212121",
+        "textbox_bg": "#FFFFFF",
+        "textbox_fg": "#212121"
+      }
+    },
+    "professional_night": {
+      "name": "Professional Night",
+      "type": "dark",
+      "cli": {
+        "background": "Black",
+        "foreground": "White",
+        "primary": "Yellow",
+        "secondary": "Magenta",
+        "success": "Green",
+        "warning": "Yellow",
+        "error": "Red",
+        "info": "Cyan"
+      },
+      "gui": {
+        "background": "#212121",
+        "foreground": "#FAFAFA",
+        "primary": "#FF6F00",
+        "secondary": "#9C27B0",
+        "button_bg": "#424242",
+        "button_fg": "#FAFAFA",
+        "tab_bg": "#2E2E2E",
+        "tab_fg": "#FAFAFA",
+        "textbox_bg": "#424242",
+        "textbox_fg": "#FAFAFA"
+      }
+    }
+  }
+}

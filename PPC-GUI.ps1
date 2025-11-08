@@ -25,6 +25,7 @@ $Ovls  = Join-Path $Root 'overlays'
 $Thumb = Join-Path $Root 'thumbnails'
 $Cfg   = Join-Path $Root 'config\defaults.json'
 $CoreModule = Join-Path $Root 'PPC-Core.ps1'
+$ThemeModule = Join-Path $Root 'PPC-Themes.ps1'
 
 $null = New-Item -ItemType Directory -Force -Path $Bins,$Logs,$Temp,$In,$Out,$Subs,$Ovls,$Thumb | Out-Null
 $LogFile = Join-Path $Logs 'ppc-gui.log'
@@ -86,6 +87,16 @@ if (Test-Path $CoreModule) {
     $script:CoreModuleLoaded = $true
   } catch {
     Write-Log "WARN: Core module load failed: $($_.Exception.Message)"
+  }
+}
+
+$script:ThemeModuleLoaded = $false
+if (Test-Path $ThemeModule) {
+  try {
+    . $ThemeModule
+    $script:ThemeModuleLoaded = $true
+  } catch {
+    Write-Log "WARN: Theme module load failed: $($_.Exception.Message)"
   }
 }
 
@@ -563,7 +574,37 @@ $btnRefreshInfo = New-Object System.Windows.Forms.Button
 $btnRefreshInfo.Text = 'Refresh Hardware Info'
 $btnRefreshInfo.Left = 10; $btnRefreshInfo.Top = 470; $btnRefreshInfo.Width = 150
 
-$tabInfo.Controls.AddRange(@($txtInfo, $btnRefreshInfo))
+$lblTheme = New-Object System.Windows.Forms.Label
+$lblTheme.Text = 'Theme:'
+$lblTheme.Left = 180; $lblTheme.Top = 475; $lblTheme.Width = 60
+
+$cmbTheme = New-Object System.Windows.Forms.ComboBox
+$cmbTheme.DropDownStyle = 'DropDownList'
+$cmbTheme.Left = 240; $cmbTheme.Top = 470; $cmbTheme.Width = 200
+
+# Populate theme selector
+if ($script:ThemeModuleLoaded) {
+  $themes = Get-AvailableThemes
+  foreach ($theme in $themes) {
+    [void]$cmbTheme.Items.Add("$($theme.name) ($($theme.type))")
+  }
+  
+  $config = Load-ThemeConfig
+  $currentThemeIndex = 0
+  for ($i = 0; $i -lt $themes.Count; $i++) {
+    if ($themes[$i].id -eq $config.current_theme) {
+      $currentThemeIndex = $i
+      break
+    }
+  }
+  $cmbTheme.SelectedIndex = $currentThemeIndex
+}
+
+$btnApplyTheme = New-Object System.Windows.Forms.Button
+$btnApplyTheme.Text = 'Apply Theme'
+$btnApplyTheme.Left = 450; $btnApplyTheme.Top = 470; $btnApplyTheme.Width = 100
+
+$tabInfo.Controls.AddRange(@($txtInfo, $btnRefreshInfo, $lblTheme, $cmbTheme, $btnApplyTheme))
 
 # Add TabControl to form
 $form.Controls.Add($tabControl)
@@ -1007,6 +1048,28 @@ $btnRefreshInfo.Add_Click({
   Update-InfoTab
 })
 
+$btnApplyTheme.Add_Click({
+  if (-not $script:ThemeModuleLoaded) {
+    [System.Windows.Forms.MessageBox]::Show('Theme module not loaded.', 'Error', 'OK', 'Error')
+    return
+  }
+  
+  $themes = Get-AvailableThemes
+  $selectedIndex = $cmbTheme.SelectedIndex
+  
+  if ($selectedIndex -ge 0 -and $selectedIndex -lt $themes.Count) {
+    $selectedTheme = $themes[$selectedIndex]
+    
+    if (Set-Theme -themeName $selectedTheme.id) {
+      # Apply theme to form immediately
+      Apply-GuiTheme -form $form
+      [System.Windows.Forms.MessageBox]::Show("Theme changed to: $($selectedTheme.name)`n`nSome changes may require restarting the application.", 'Success', 'OK', 'Information')
+    } else {
+      [System.Windows.Forms.MessageBox]::Show('Failed to apply theme.', 'Error', 'OK', 'Error')
+    }
+  }
+})
+
 # Form load
 $form.Add_Shown({
   # Load profiles
@@ -1026,6 +1089,16 @@ $form.Add_Shown({
   # Update info tab
   Update-InfoTab
 })
+
+# Apply theme to form
+if ($script:ThemeModuleLoaded) {
+  try {
+    Apply-GuiTheme -form $form
+    Write-Log "Theme applied to GUI"
+  } catch {
+    Write-Log "WARN: Failed to apply theme: $($_.Exception.Message)"
+  }
+}
 
 Write-Log "PPC-GUI Enhanced started"
 [void]$form.ShowDialog()
