@@ -723,8 +723,12 @@ $btnBatchStart.Add_Click({
     return
   }
   
-  if (-not $Config.profiles -or $cmbBatchProfile.SelectedIndex -lt 0) {
+  if (-not $Config -or -not $Config.PSObject.Properties['profiles'] -or $cmbBatchProfile.SelectedIndex -lt 0) {
     [System.Windows.Forms.MessageBox]::Show('No profile selected or config error.', 'Error', 'OK', 'Error')
+    return
+  }
+  if ($cmbBatchProfile.SelectedIndex -ge $Config.profiles.Count) {
+    [System.Windows.Forms.MessageBox]::Show('Invalid profile selection.', 'Error', 'OK', 'Error')
     return
   }
   $p = $Config.profiles[$cmbBatchProfile.SelectedIndex]
@@ -1103,7 +1107,7 @@ Hardware Acceleration:
     $info += "`nHardware detection requires FFmpeg and Core module."
   }
   
-  if ($Config.profiles) {
+  if ($Config -and $Config.PSObject.Properties['profiles'] -and $Config.profiles) {
     $info += "`n`nProfiles Loaded: $($Config.profiles.Count)"
   } else {
     $info += "`n`nProfiles Loaded: 0 (Error loading config)"
@@ -1157,7 +1161,7 @@ $btnApplyTheme.Add_Click({
 $form.Add_Shown({
   # Load profiles
   $cmbBatchProfile.Items.Clear()
-  if ($Config.profiles) {
+  if ($Config -and $Config.PSObject.Properties['profiles'] -and $Config.profiles) {
     foreach ($p in $Config.profiles) {
       [void]$cmbBatchProfile.Items.Add($p.name)
     }
