@@ -6,23 +6,16 @@ Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName PresentationCore
 Add-Type -AssemblyName WindowsBase
 
-# Load theme configuration
-$ThemesPath = Join-Path $PSScriptRoot "config\themes.json"
-if (Test-Path $ThemesPath) {
-    $ThemesConfig = Get-Content $ThemesPath | ConvertFrom-Json
-    $CurrentTheme = $ThemesConfig.themes | Where-Object { $_.id -eq $ThemesConfig.default } | Select-Object -First 1
-} else {
-    # Fallback theme
-    $CurrentTheme = @{
-        id = "material_dark"
-        name = "Material Dark"
-        background = "#1E1E1E"
-        surface = "#2D2D30"
-        primary = "#0078D7"
-        accent = "#00BCD4"
-        text = "#FFFFFF"
-        border = "#3E3E42"
-    }
+# Load theme configuration - use hardcoded Material Dark theme for demo
+$CurrentTheme = @{
+    id = "material_dark"
+    name = "Material Dark"
+    background = "#1E1E1E"
+    surface = "#2D2D30"
+    primary = "#0078D7"
+    accent = "#00BCD4"
+    text = "#FFFFFF"
+    border = "#3E3E42"
 }
 
 # XAML Definition for Modern WPF UI
