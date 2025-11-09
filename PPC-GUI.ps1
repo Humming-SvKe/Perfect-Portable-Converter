@@ -181,10 +181,10 @@ function Convert-One([string]$src,[string]$dst,$p, [System.Windows.Forms.Progres
   $filters=@()
   if ($p.ContainsKey('scale') -and $p.scale) { $filters += "scale=$($p.scale)" }
   if ($p.ContainsKey('effects')) { foreach ($ef in $p.effects) { $filters += $ef } }
-  if ($p.ContainsKey('deinterlace') -and $p.deinterlace -and $Config.filters.ContainsKey('deinterlace')) {
+  if ($p.ContainsKey('deinterlace') -and $p.deinterlace -and $Config.filters -and $Config.filters.deinterlace) {
     $filters += $Config.filters.deinterlace
   }
-  if ($p.ContainsKey('denoise') -and $p.denoise -and $Config.filters.ContainsKey('denoise')) {
+  if ($p.ContainsKey('denoise') -and $p.denoise -and $Config.filters -and $Config.filters.denoise) {
     $filters += $Config.filters.denoise
   }
   
@@ -723,7 +723,7 @@ $btnBatchStart.Add_Click({
     return
   }
   
-  if (-not $Config.ContainsKey('profiles') -or -not $Config.profiles -or $cmbBatchProfile.SelectedIndex -lt 0) {
+  if (-not $Config.profiles -or $cmbBatchProfile.SelectedIndex -lt 0) {
     [System.Windows.Forms.MessageBox]::Show('No profile selected or config error.', 'Error', 'OK', 'Error')
     return
   }
@@ -1103,7 +1103,7 @@ Hardware Acceleration:
     $info += "`nHardware detection requires FFmpeg and Core module."
   }
   
-  if ($Config.ContainsKey('profiles') -and $Config.profiles) {
+  if ($Config.profiles) {
     $info += "`n`nProfiles Loaded: $($Config.profiles.Count)"
   } else {
     $info += "`n`nProfiles Loaded: 0 (Error loading config)"
@@ -1157,7 +1157,7 @@ $btnApplyTheme.Add_Click({
 $form.Add_Shown({
   # Load profiles
   $cmbBatchProfile.Items.Clear()
-  if ($Config.ContainsKey('profiles') -and $Config.profiles) {
+  if ($Config.profiles) {
     foreach ($p in $Config.profiles) {
       [void]$cmbBatchProfile.Items.Add($p.name)
     }
