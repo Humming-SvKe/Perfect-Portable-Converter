@@ -219,12 +219,30 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
+# Modern font for better appearance
+$modernFont = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Regular)
+$modernFontBold = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+
+# Function to style buttons with modern flat appearance
+function Style-ModernButton([System.Windows.Forms.Button]$btn) {
+  $btn.FlatStyle = 'Flat'
+  $btn.FlatAppearance.BorderSize = 1
+  $btn.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+  $btn.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+  $btn.ForeColor = [System.Drawing.Color]::White
+  $btn.Font = $modernFontBold
+  $btn.Cursor = [System.Windows.Forms.Cursors]::Hand
+  $btn.Height = 28
+}
+
 $form = New-Object System.Windows.Forms.Form
-$form.Text = 'Perfect Portable Converter - Enhanced'
-$form.Width = 900
-$form.Height = 650
+$form.Text = 'Perfect Portable Converter v2.2 - Enhanced'
+$form.Width = 950
+$form.Height = 700
 $form.StartPosition = 'CenterScreen'
-$form.MinimumSize = New-Object System.Drawing.Size(800, 600)
+$form.MinimumSize = New-Object System.Drawing.Size(900, 650)
+$form.Font = $modernFont
+$form.BackColor = [System.Drawing.Color]::FromArgb(240, 240, 240)
 
 # Create TabControl
 $tabControl = New-Object System.Windows.Forms.TabControl
@@ -284,6 +302,18 @@ $txtBatchLog.Left = 10; $txtBatchLog.Top = 440; $txtBatchLog.Width = 680; $txtBa
 $txtBatchLog.Multiline = $true; $txtBatchLog.ScrollBars = 'Vertical'; $txtBatchLog.ReadOnly = $true
 $txtBatchLog.Font = New-Object System.Drawing.Font("Consolas", 9)
 
+# Style batch tab buttons
+Style-ModernButton $btnBatchAdd
+Style-ModernButton $btnBatchRemove
+Style-ModernButton $btnBatchClear
+Style-ModernButton $btnBatchOutputChange
+$btnBatchStart.FlatStyle = 'Flat'
+$btnBatchStart.FlatAppearance.BorderSize = 1
+$btnBatchStart.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(40, 167, 69)
+$btnBatchStart.BackColor = [System.Drawing.Color]::FromArgb(40, 167, 69)
+$btnBatchStart.ForeColor = [System.Drawing.Color]::White
+$btnBatchStart.Cursor = [System.Windows.Forms.Cursors]::Hand
+
 $tabBatch.Controls.AddRange(@($lblBatchFiles, $lstBatchFiles, $btnBatchAdd, $btnBatchRemove, $btnBatchClear,
   $lblBatchProfile, $cmbBatchProfile, $lblBatchOutput, $btnBatchOutputChange, $btnBatchStart, $pgBatch, $txtBatchLog))
 
@@ -329,6 +359,10 @@ $lblMKVStatus = New-Object System.Windows.Forms.Label
 $lblMKVStatus.Text = ''
 $lblMKVStatus.Left = 10; $lblMKVStatus.Top = 210; $lblMKVStatus.Width = 380; $lblMKVStatus.Height = 60
 $lblMKVStatus.Font = New-Object System.Drawing.Font("Arial", 9)
+
+# Style MKV tab buttons
+Style-ModernButton $btnMKVBrowse
+Style-ModernButton $btnMKVExtract
 
 $grpMKVExtract.Controls.AddRange(@($lblMKVInput, $txtMKVInput, $btnMKVBrowse, $chkExtractVideo, $chkExtractAudio, $chkExtractSubs, $btnMKVExtract, $lblMKVStatus))
 $tabMKV.Controls.Add($grpMKVExtract)
@@ -432,6 +466,11 @@ $lblWMStatus = New-Object System.Windows.Forms.Label
 $lblWMStatus.Text = ''
 $lblWMStatus.Left = 10; $lblWMStatus.Top = 395; $lblWMStatus.Width = 380; $lblWMStatus.Height = 40
 
+# Style Watermark tab buttons
+Style-ModernButton $btnWMVideoBrowse
+Style-ModernButton $btnWMImageBrowse
+Style-ModernButton $btnWMApply
+
 $grpWMType.Controls.AddRange(@($rbWMImage, $rbWMText, $lblWMVideo, $txtWMVideo, $btnWMVideoBrowse,
   $lblWMImage, $txtWMImage, $btnWMImageBrowse, $lblWMText, $txtWMText, $lblWMFontSize, $numWMFontSize,
   $lblWMColor, $cmbWMColor, $lblWMPosition, $cmbWMPosition, $lblWMOpacity, $numWMOpacity, $btnWMApply, $lblWMStatus))
@@ -475,6 +514,11 @@ $btnSubBurn.Left = 10; $btnSubBurn.Top = 150; $btnSubBurn.Width = 120; $btnSubBu
 $lblSubStatus = New-Object System.Windows.Forms.Label
 $lblSubStatus.Text = ''
 $lblSubStatus.Left = 10; $lblSubStatus.Top = 190; $lblSubStatus.Width = 380; $lblSubStatus.Height = 50
+
+# Style Subtitle tab buttons
+Style-ModernButton $btnSubVideoBrowse
+Style-ModernButton $btnSubFileBrowse
+Style-ModernButton $btnSubBurn
 
 $grpSubBurn.Controls.AddRange(@($lblSubVideo, $txtSubVideo, $btnSubVideoBrowse, $lblSubFile, $txtSubFile, $btnSubFileBrowse, $btnSubBurn, $lblSubStatus))
 $tabSubtitle.Controls.Add($grpSubBurn)
@@ -523,6 +567,10 @@ $lblTrimStatus = New-Object System.Windows.Forms.Label
 $lblTrimStatus.Text = ''
 $lblTrimStatus.Left = 10; $lblTrimStatus.Top = 160; $lblTrimStatus.Width = 380; $lblTrimStatus.Height = 30
 
+# Style Video Tools tab buttons
+Style-ModernButton $btnTrimVideoBrowse
+Style-ModernButton $btnTrimExecute
+
 $grpTrim.Controls.AddRange(@($lblTrimVideo, $txtTrimVideo, $btnTrimVideoBrowse, $lblTrimStart, $numTrimStart, $lblTrimDuration, $numTrimDuration, $btnTrimExecute, $lblTrimStatus))
 $tabVideoTools.Controls.Add($grpTrim)
 
@@ -556,6 +604,9 @@ $btnThumbGenerate.Left = 190; $btnThumbGenerate.Top = 81; $btnThumbGenerate.Widt
 $lblThumbStatus = New-Object System.Windows.Forms.Label
 $lblThumbStatus.Text = ''
 $lblThumbStatus.Left = 10; $lblThumbStatus.Top = 115; $lblThumbStatus.Width = 380; $lblThumbStatus.Height = 30
+
+Style-ModernButton $btnThumbVideoBrowse
+Style-ModernButton $btnThumbGenerate
 
 $grpThumb.Controls.AddRange(@($lblThumbVideo, $txtThumbVideo, $btnThumbVideoBrowse, $lblThumbTime, $numThumbTime, $btnThumbGenerate, $lblThumbStatus))
 $tabVideoTools.Controls.Add($grpThumb)
@@ -619,6 +670,10 @@ $btnApplyTheme = New-Object System.Windows.Forms.Button
 $btnApplyTheme.Text = 'Apply Theme'
 $btnApplyTheme.Left = 450; $btnApplyTheme.Top = 470; $btnApplyTheme.Width = 100
 
+# Style Info tab buttons
+Style-ModernButton $btnRefreshInfo
+Style-ModernButton $btnApplyTheme
+
 $tabInfo.Controls.AddRange(@($txtInfo, $btnRefreshInfo, $lblTheme, $cmbTheme, $btnApplyTheme))
 
 # Add TabControl to form
@@ -668,6 +723,10 @@ $btnBatchStart.Add_Click({
     return
   }
   
+  if (-not $Config.ContainsKey('profiles') -or -not $Config.profiles -or $cmbBatchProfile.SelectedIndex -lt 0) {
+    [System.Windows.Forms.MessageBox]::Show('No profile selected or config error.', 'Error', 'OK', 'Error')
+    return
+  }
   $p = $Config.profiles[$cmbBatchProfile.SelectedIndex]
   
   # Disable UI
@@ -1044,7 +1103,11 @@ Hardware Acceleration:
     $info += "`nHardware detection requires FFmpeg and Core module."
   }
   
-  $info += "`n`nProfiles Loaded: $($Config.profiles.Count)"
+  if ($Config.ContainsKey('profiles') -and $Config.profiles) {
+    $info += "`n`nProfiles Loaded: $($Config.profiles.Count)"
+  } else {
+    $info += "`n`nProfiles Loaded: 0 (Error loading config)"
+  }
   $info += "`n`nFeatures:"
   $info += "`n- Batch video conversion with multiple profiles"
   $info += "`n- MKV track extraction and merging"
@@ -1094,11 +1157,15 @@ $btnApplyTheme.Add_Click({
 $form.Add_Shown({
   # Load profiles
   $cmbBatchProfile.Items.Clear()
-  foreach ($p in $Config.profiles) {
-    [void]$cmbBatchProfile.Items.Add($p.name)
+  if ($Config.ContainsKey('profiles') -and $Config.profiles) {
+    foreach ($p in $Config.profiles) {
+      [void]$cmbBatchProfile.Items.Add($p.name)
+    }
   }
   if ($cmbBatchProfile.Items.Count -gt 0) {
     $cmbBatchProfile.SelectedIndex = 0
+  } else {
+    Write-Log "WARN: No profiles loaded from config"
   }
   
   # Check FFmpeg
