@@ -1088,15 +1088,25 @@ $form.Add_Shown({
   
   # Update info tab
   Update-InfoTab
+  
+  # Apply theme on startup
+  if ($script:ThemeModuleLoaded) {
+    try {
+      Apply-GuiTheme -form $form
+      Write-Log "Theme applied to GUI on startup"
+    } catch {
+      Write-Log "WARN: Failed to apply theme on startup: $($_.Exception.Message)"
+    }
+  }
 })
 
-# Apply theme to form
+# Apply theme to form initially (before show)
 if ($script:ThemeModuleLoaded) {
   try {
     Apply-GuiTheme -form $form
-    Write-Log "Theme applied to GUI"
+    Write-Log "Initial theme applied to GUI"
   } catch {
-    Write-Log "WARN: Failed to apply theme: $($_.Exception.Message)"
+    Write-Log "WARN: Failed to apply initial theme: $($_.Exception.Message)"
   }
 }
 
