@@ -65,11 +65,13 @@ function Get-AvailableThemes {
     
     $themes = @()
     $config.themes.PSObject.Properties | ForEach-Object {
-        $themes += @{
+        $themeObj = New-Object PSObject -Property @{
             id = $_.Name
             name = $_.Value.name
             type = $_.Value.type
+            displayName = "$($_.Value.name) - $($_.Value.type)"
         }
+        $themes += $themeObj
     }
     
     return $themes
@@ -232,6 +234,3 @@ function Apply-GuiTheme {
 
 # Initialize themes
 Load-ThemeConfig | Out-Null
-
-# Export functions
-Export-ModuleMember -Function Load-ThemeConfig, Save-ThemeConfig, Set-Theme, Get-AvailableThemes, Write-Themed, Apply-GuiTheme

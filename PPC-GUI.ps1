@@ -582,22 +582,37 @@ $cmbTheme = New-Object System.Windows.Forms.ComboBox
 $cmbTheme.DropDownStyle = 'DropDownList'
 $cmbTheme.Left = 240; $cmbTheme.Top = 470; $cmbTheme.Width = 200
 
-# Populate theme selector
+# Populate theme selector  
+$script:AvailableThemes = @()
 if ($script:ThemeModuleLoaded) {
-  $themes = Get-AvailableThemes
-  foreach ($theme in $themes) {
-    [void]$cmbTheme.Items.Add("$($theme.name) ($($theme.type))")
-  }
-  
-  $config = Load-ThemeConfig
-  $currentThemeIndex = 0
-  for ($i = 0; $i -lt $themes.Count; $i++) {
-    if ($themes[$i].id -eq $config.current_theme) {
-      $currentThemeIndex = $i
-      break
+  try {
+    $script:AvailableThemes = Get-AvailableThemes
+    if ($script:AvailableThemes.Count -gt 0) {
+      foreach ($theme in $script:AvailableThemes) {
+        [void]$cmbTheme.Items.Add($theme.displayName)
+      }
+      
+      $config = Load-ThemeConfig
+      $currentThemeIndex = 0
+      for ($i = 0; $i -lt $script:AvailableThemes.Count; $i++) {
+        if ($script:AvailableThemes[$i].id -eq $config.current_theme) {
+          $currentThemeIndex = $i
+          break
+        }
+      }
+      $cmbTheme.SelectedIndex = $currentThemeIndex
+    } else {
+      [void]$cmbTheme.Items.Add("No themes available")
+      $cmbTheme.Enabled = $false
     }
+  } catch {
+    Write-Log "WARN: Failed to load themes: $($_.Exception.Message)"
+    [void]$cmbTheme.Items.Add("Error loading themes")
+    $cmbTheme.Enabled = $false
   }
-  $cmbTheme.SelectedIndex = $currentThemeIndex
+} else {
+  [void]$cmbTheme.Items.Add("Theme module not loaded")
+  $cmbTheme.Enabled = $false
 }
 
 $btnApplyTheme = New-Object System.Windows.Forms.Button
@@ -1054,19 +1069,24 @@ $btnApplyTheme.Add_Click({
     return
   }
   
-  $themes = Get-AvailableThemes
   $selectedIndex = $cmbTheme.SelectedIndex
   
-  if ($selectedIndex -ge 0 -and $selectedIndex -lt $themes.Count) {
-    $selectedTheme = $themes[$selectedIndex]
+  if ($selectedIndex -ge 0 -and $selectedIndex -lt $script:AvailableThemes.Count) {
+    $selectedTheme = $script:AvailableThemes[$selectedIndex]
     
-    if (Set-Theme -themeName $selectedTheme.id) {
-      # Apply theme to form immediately
-      Apply-GuiTheme -form $form
-      [System.Windows.Forms.MessageBox]::Show("Theme changed to: $($selectedTheme.name)`n`nSome changes may require restarting the application.", 'Success', 'OK', 'Information')
-    } else {
-      [System.Windows.Forms.MessageBox]::Show('Failed to apply theme.', 'Error', 'OK', 'Error')
+    try {
+      if (Set-Theme -themeName $selectedTheme.id) {
+        # Apply theme to form immediately
+        Apply-GuiTheme -form $form
+        [System.Windows.Forms.MessageBox]::Show("Theme applied: $($selectedTheme.name)`n`nAll colors and styles have been updated!", 'Success', 'OK', 'Information')
+      } else {
+        [System.Windows.Forms.MessageBox]::Show('Failed to save theme configuration.', 'Error', 'OK', 'Error')
+      }
+    } catch {
+      [System.Windows.Forms.MessageBox]::Show("Error applying theme: $($_.Exception.Message)", 'Error', 'OK', 'Error')
     }
+  } else {
+    [System.Windows.Forms.MessageBox]::Show('Please select a valid theme.', 'Warning', 'OK', 'Warning')
   }
 })
 
