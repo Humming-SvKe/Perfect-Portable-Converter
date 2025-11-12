@@ -1,8 +1,46 @@
 {
   "default_format": "mp4",
+  "hardware_acceleration": {
+    "enabled": true,
+    "prefer": "auto"
+  },
   "profiles": [
-    { "name": "Fast 1080p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 23, "acodec": "aac", "ab": "160k", "scale": "" },
-    { "name": "Small 720p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 26, "acodec": "aac", "ab": "128k", "scale": "1280:-2" },
-    { "name": "Device WhatsApp H264", "vcodec": "libx264", "preset": "veryfast", "crf": 24, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "maxdur": 180 }
+    { "name": "Fast 1080p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 23, "acodec": "aac", "ab": "160k", "scale": "", "format": "mp4" },
+    { "name": "Small 720p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 26, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "format": "mp4" },
+    { "name": "Device WhatsApp H264", "vcodec": "libx264", "preset": "veryfast", "crf": 24, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "maxdur": 180, "format": "mp4" },
+    { "name": "Telegram Free (under 2GB)", "vcodec": "libx264", "preset": "medium", "crf": 23, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "format": "mp4", "maxsize": "2000M" },
+    { "name": "Telegram Premium (under 4GB)", "vcodec": "libx265", "preset": "medium", "crf": 22, "acodec": "aac", "ab": "160k", "scale": "1920:-2", "format": "mp4", "maxsize": "3900M" },
+    { "name": "High Quality 1080p H265", "vcodec": "libx265", "preset": "medium", "crf": 22, "acodec": "aac", "ab": "192k", "scale": "1920:-2", "format": "mp4" },
+    { "name": "Ultra 4K H265", "vcodec": "libx265", "preset": "slow", "crf": 20, "acodec": "aac", "ab": "256k", "scale": "3840:-2", "format": "mp4" },
+    { "name": "YouTube 1080p", "vcodec": "libx264", "preset": "medium", "crf": 21, "acodec": "aac", "ab": "192k", "scale": "1920:-2", "format": "mp4" },
+    { "name": "YouTube 4K", "vcodec": "libx264", "preset": "medium", "crf": 20, "acodec": "aac", "ab": "256k", "scale": "3840:-2", "format": "mp4" },
+    { "name": "Web VP9 1080p", "vcodec": "libvpx-vp9", "vb": "2M", "acodec": "libopus", "ab": "128k", "scale": "1920:-2", "format": "webm" },
+    { "name": "iPhone/iPad", "vcodec": "libx264", "preset": "medium", "crf": 23, "acodec": "aac", "ab": "160k", "scale": "1920:-2", "format": "mp4", "profile": "high", "level": "4.1" },
+    { "name": "Android Phone", "vcodec": "libx264", "preset": "medium", "crf": 24, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "format": "mp4" },
+    { "name": "NVIDIA H264 Fast", "vcodec": "h264_nvenc", "preset": "fast", "vb": "5M", "acodec": "aac", "ab": "160k", "scale": "", "format": "mp4", "hwaccel": "nvenc" },
+    { "name": "NVIDIA H265 Fast", "vcodec": "hevc_nvenc", "preset": "fast", "vb": "4M", "acodec": "aac", "ab": "192k", "scale": "", "format": "mp4", "hwaccel": "nvenc" },
+    { "name": "Intel QSV H264", "vcodec": "h264_qsv", "preset": "fast", "vb": "5M", "acodec": "aac", "ab": "160k", "scale": "", "format": "mp4", "hwaccel": "qsv" },
+    { "name": "Intel QSV H265", "vcodec": "hevc_qsv", "preset": "fast", "vb": "4M", "acodec": "aac", "ab": "192k", "scale": "", "format": "mp4", "hwaccel": "qsv" },
+    { "name": "AMD AMF H264", "vcodec": "h264_amf", "quality": "balanced", "vb": "5M", "acodec": "aac", "ab": "160k", "scale": "", "format": "mp4", "hwaccel": "amf" },
+    { "name": "Archive High Quality", "vcodec": "libx265", "preset": "veryslow", "crf": 18, "acodec": "flac", "scale": "", "format": "mkv" },
+    { "name": "Small Size H265", "vcodec": "libx265", "preset": "fast", "crf": 28, "acodec": "aac", "ab": "96k", "scale": "1280:-2", "format": "mp4" },
+    { "name": "Instagram Story", "vcodec": "libx264", "preset": "medium", "crf": 23, "acodec": "aac", "ab": "128k", "scale": "1080:1920", "format": "mp4", "maxsize": "4M", "maxdur": 15 },
+    { "name": "Instagram Post", "vcodec": "libx264", "preset": "medium", "crf": 23, "acodec": "aac", "ab": "128k", "scale": "1080:1080", "format": "mp4", "maxsize": "100M", "maxdur": 60 },
+    { "name": "Instagram Reel", "vcodec": "libx264", "preset": "medium", "crf": 23, "acodec": "aac", "ab": "128k", "scale": "1080:1920", "format": "mp4", "maxsize": "100M", "maxdur": 90 },
+    { "name": "Discord Basic", "vcodec": "libx264", "preset": "fast", "crf": 26, "acodec": "aac", "ab": "96k", "scale": "1280:-2", "format": "mp4", "maxsize": "8M" },
+    { "name": "Discord Nitro", "vcodec": "libx264", "preset": "medium", "crf": 24, "acodec": "aac", "ab": "128k", "scale": "1920:-2", "format": "mp4", "maxsize": "50M" },
+    { "name": "Audio Only", "vcodec": "none", "acodec": "aac", "ab": "192k", "format": "m4a" }
+  ],
+  "filters": {
+    "deinterlace": "yadif=0:-1:0",
+    "denoise": "hqdn3d=4:3:6:4.5",
+    "sharpen": "unsharp=5:5:1.0:5:5:0.0",
+    "stabilize": "vidstabdetect"
+  },
+  "subtitle_fonts": [
+    "Arial",
+    "Times New Roman",
+    "Verdana",
+    "Calibri"
   ]
 }
