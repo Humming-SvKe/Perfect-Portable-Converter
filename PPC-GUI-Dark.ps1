@@ -26,19 +26,19 @@ $script:currentTab = 'Convert'
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# DPI Awareness - Per-Monitor V2 (Windows 10 1703+)
+# Visual Styles FIRST
+[Windows.Forms.Application]::EnableVisualStyles()
+[Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
+
+# DPI Awareness - System level (more reliable than per-monitor for WinForms)
 Add-Type @'
 using System.Runtime.InteropServices;
 public class DPI {
-    [DllImport("shcore.dll")]
-    public static extern int SetProcessDpiAwareness(int value);
+    [DllImport("user32.dll")]
+    public static extern bool SetProcessDPIAware();
 }
 '@
-try { [DPI]::SetProcessDpiAwareness(2) } catch { }
-
-# Visual Styles
-[Windows.Forms.Application]::EnableVisualStyles()
-[Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
+[DPI]::SetProcessDPIAware()
 
 # Apowersoft Dark Palette
 $c = @{
@@ -59,13 +59,12 @@ $c = @{
 # ===================================
 $form = New-Object Windows.Forms.Form
 $form.Text = 'Apowersoft Video Converter Studio'
-$form.Size = New-Object Drawing.Size(1400, 800)
+$form.ClientSize = New-Object Drawing.Size(1400, 800)
 $form.MinimumSize = New-Object Drawing.Size(1200, 700)
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = $c.Bg
 $form.ForeColor = $c.Text
-$form.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
-$form.AutoScaleMode = [Windows.Forms.AutoScaleMode]::Dpi
+$form.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Regular)
 
 # ===================================
 # TOP TABS (Convert, Split, MV, Download, Record)
@@ -92,7 +91,7 @@ foreach($tab in $tabs) {
     $btn.Location = New-Object Drawing.Point($tabX, 10)
     $btn.Size = New-Object Drawing.Size(150, 34)
     $btn.FlatStyle = 'Flat'
-    $btn.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
+    $btn.Font = New-Object Drawing.Font('Segoe UI', 9)
     
     if($tab.active) {
         $btn.BackColor = [Drawing.Color]::FromArgb(57,65,75)
@@ -137,7 +136,7 @@ $btnAdd.BackColor = $c.Accent
 $btnAdd.ForeColor = $c.Text
 $btnAdd.FlatStyle = 'Flat'
 $btnAdd.FlatAppearance.BorderSize = 0
-$btnAdd.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Point)
+$btnAdd.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Bold)
 $btnAdd.Cursor = [Windows.Forms.Cursors]::Hand
 $mainPanel.Controls.Add($btnAdd)
 
@@ -155,7 +154,7 @@ $lv.BackColor = $c.Panel
 $lv.ForeColor = $c.Text
 $lv.BorderStyle = 'FixedSingle'
 $lv.HeaderStyle = 'Nonclickable'
-$lv.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
+$lv.Font = New-Object Drawing.Font('Segoe UI', 9)
 
 # Columns
 $lv.Columns.Add('File Name', 320) | Out-Null
@@ -176,7 +175,7 @@ $lblHint.Location = New-Object Drawing.Point(520, 310)
 $lblHint.Size = New-Object Drawing.Size(450, 40)
 $lblHint.TextAlign = 'MiddleCenter'
 $lblHint.ForeColor = $c.TextMuted
-$lblHint.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Italic, [Drawing.GraphicsUnit]::Point)
+$lblHint.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Italic)
 $lblHint.BackColor = [Drawing.Color]::Transparent
 $mainPanel.Controls.Add($lblHint)
 $lblHint.BringToFront()
@@ -323,7 +322,7 @@ $btnConvert.BackColor = $c.Accent
 $btnConvert.ForeColor = $c.Text
 $btnConvert.FlatStyle = 'Flat'
 $btnConvert.FlatAppearance.BorderSize = 0
-$btnConvert.Font = New-Object Drawing.Font('Segoe UI', 18, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Point)
+$btnConvert.Font = New-Object Drawing.Font('Segoe UI', 18, [Drawing.FontStyle]::Bold)
 $btnConvert.Cursor = [Windows.Forms.Cursors]::Hand
 $bottomBar.Controls.Add($btnConvert)
 
