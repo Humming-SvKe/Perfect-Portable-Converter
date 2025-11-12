@@ -1,0 +1,14 @@
+name: Build
+on: [push]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci || npm install
+      - run: npm run build
+      - run: Compress-Archive -Path dist,node_modules,START.bat -DestinationPath PPC.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PPC-Portable
+          path: PPC.zip
