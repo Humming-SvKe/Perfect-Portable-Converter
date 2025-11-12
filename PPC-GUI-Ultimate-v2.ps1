@@ -290,6 +290,7 @@ function New-ModernComboBox {
 $form = New-Object System.Windows.Forms.Form
 $form.Text = 'Professional Portable Converter - Ultimate Edition v2'
 $form.ClientSize = New-Object System.Drawing.Size(1280, 720)
+$form.MinimumSize = New-Object System.Drawing.Size(1100, 600)
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = $ColorBg
 $form.ForeColor = $ColorText
@@ -345,63 +346,65 @@ $lvTasks.Columns.Add("Status", 120) | Out-Null
 $lvTasks.AllowDrop = $true
 $form.Controls.Add($lvTasks)
 
-# Hint label (shows when list is empty)
+# Hint label (shows when list is empty) - positioned over ListView
 $lblHint = New-Object System.Windows.Forms.Label
 $lblHint.Text = "Click '+ Add Files' button or drag & drop video files here to start"
 $lblHint.AutoSize = $false
 $lblHint.TextAlign = 'MiddleCenter'
-$lblHint.Dock = 'Fill'
+$lblHint.Location = New-Object System.Drawing.Point(0, 250)
+$lblHint.Size = New-Object System.Drawing.Size(1280, 100)
+$lblHint.Anchor = 'Top,Left,Right'
 $lblHint.ForeColor = $ColorTextDim
-$lblHint.BackColor = $ColorBg
+$lblHint.BackColor = [System.Drawing.Color]::Transparent
 $lblHint.Font = New-Object System.Drawing.Font('Segoe UI', 12, [System.Drawing.FontStyle]::Italic)
-$form.Controls.Add($lblHint)
-$lblHint.BringToFront()
+$lvTasks.Controls.Add($lblHint)
 
 # ===================================
 # BOTTOM BAR (Profile, Output, Convert)
 # ===================================
 $bottomBar = New-Object System.Windows.Forms.Panel
 $bottomBar.Dock = 'Bottom'
-$bottomBar.Height = 120
+$bottomBar.Height = 140
 $bottomBar.BackColor = $ColorPanel
 $form.Controls.Add($bottomBar)
 
 # Profile section
 $lblProfile = New-Object System.Windows.Forms.Label
 $lblProfile.Text = 'Conversion Profile:'
-$lblProfile.Location = New-Object System.Drawing.Point(15, 15)
+$lblProfile.Location = New-Object System.Drawing.Point(15, 18)
 $lblProfile.Size = New-Object System.Drawing.Size(130, 20)
 $lblProfile.ForeColor = $ColorTextDim
 $lblProfile.Font = New-Object System.Drawing.Font('Segoe UI', 9)
 $bottomBar.Controls.Add($lblProfile)
 
-$cmbProfile = New-ModernComboBox -X 15 -Y 38 -Width 500
+$cmbProfile = New-ModernComboBox -X 15 -Y 42 -Width 520
 $bottomBar.Controls.Add($cmbProfile)
 
-$btnEditPreset = New-ModernButton -Text 'Edit Preset...' -X 525 -Y 36 -Width 110 -Height 28
+$btnEditPreset = New-ModernButton -Text 'Edit Preset...' -X 545 -Y 40 -Width 120 -Height 30
 $bottomBar.Controls.Add($btnEditPreset)
 
 # Output section
 $lblOutput = New-Object System.Windows.Forms.Label
 $lblOutput.Text = 'Output Folder:'
-$lblOutput.Location = New-Object System.Drawing.Point(15, 75)
+$lblOutput.Location = New-Object System.Drawing.Point(15, 84)
 $lblOutput.Size = New-Object System.Drawing.Size(100, 20)
 $lblOutput.ForeColor = $ColorTextDim
 $lblOutput.Font = New-Object System.Drawing.Font('Segoe UI', 9)
 $bottomBar.Controls.Add($lblOutput)
 
-$txtOutput = New-ModernTextBox -X 120 -Y 73 -Width 400 -Text $Out
+$txtOutput = New-ModernTextBox -X 120 -Y 82 -Width 415 -Text $Out
 $bottomBar.Controls.Add($txtOutput)
 
-$btnBrowseOutput = New-ModernButton -Text '...' -X 530 -Y 71 -Width 40 -Height 28
+$btnBrowseOutput = New-ModernButton -Text '...' -X 545 -Y 80 -Width 45 -Height 30
 $bottomBar.Controls.Add($btnBrowseOutput)
 
-$btnOpenOutput = New-ModernButton -Text 'Open Folder' -X 580 -Y 71 -Width 110 -Height 28
+$btnOpenOutput = New-ModernButton -Text 'Open Folder' -X 600 -Y 80 -Width 110 -Height 30
 $bottomBar.Controls.Add($btnOpenOutput)
 
-# Big Convert Button
-$btnConvert = New-ModernButton -Text 'CONVERT' -X 1050 -Y 15 -Width 215 -Height 90 -IsPrimary $true
+# Big Convert Button (anchored to right)
+$btnConvert = New-ModernButton -Text 'CONVERT' -X 1050 -Y 20 -Width 200 -Height 100 -IsPrimary $true
 $btnConvert.Font = New-Object System.Drawing.Font('Segoe UI', 16, [System.Drawing.FontStyle]::Bold)
+$btnConvert.Anchor = 'Top,Right'
 $bottomBar.Controls.Add($btnConvert)
 
 # ===================================
