@@ -22,23 +22,23 @@ $Ovls = Join-Path $Root 'overlays'
 $script:files = @()
 $script:currentTab = 'Convert'
 
-# WinForms
+# WinForms + DPI Awareness (like HandBrake)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
-[Windows.Forms.Application]::EnableVisualStyles()
 
-# DPI Awareness - improved
+# DPI Awareness - Per-Monitor V2 (Windows 10 1703+)
 Add-Type @'
 using System.Runtime.InteropServices;
-public class Display {
+public class DPI {
     [DllImport("shcore.dll")]
     public static extern int SetProcessDpiAwareness(int value);
 }
 '@
-try { [Display]::SetProcessDpiAwareness(2) } catch { }
-Add-Type -AssemblyName System.Windows.Forms
-[System.Windows.Forms.Application]::EnableVisualStyles()
-[System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
+try { [DPI]::SetProcessDpiAwareness(2) } catch { }
+
+# Visual Styles
+[Windows.Forms.Application]::EnableVisualStyles()
+[Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 
 # Apowersoft Dark Palette
 $c = @{
@@ -64,7 +64,8 @@ $form.MinimumSize = New-Object Drawing.Size(1200, 700)
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = $c.Bg
 $form.ForeColor = $c.Text
-$form.Font = New-Object Drawing.Font('Segoe UI', 9.75, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
+$form.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
+$form.AutoScaleMode = [Windows.Forms.AutoScaleMode]::Dpi
 
 # ===================================
 # TOP TABS (Convert, Split, MV, Download, Record)
@@ -91,8 +92,7 @@ foreach($tab in $tabs) {
     $btn.Location = New-Object Drawing.Point($tabX, 10)
     $btn.Size = New-Object Drawing.Size(150, 34)
     $btn.FlatStyle = 'Flat'
-    $btn.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
-    $btn.UseCompatibleTextRendering = $false
+    $btn.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
     
     if($tab.active) {
         $btn.BackColor = [Drawing.Color]::FromArgb(57,65,75)
@@ -137,8 +137,7 @@ $btnAdd.BackColor = $c.Accent
 $btnAdd.ForeColor = $c.Text
 $btnAdd.FlatStyle = 'Flat'
 $btnAdd.FlatAppearance.BorderSize = 0
-$btnAdd.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Point)
-$btnAdd.UseCompatibleTextRendering = $false
+$btnAdd.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Point)
 $btnAdd.Cursor = [Windows.Forms.Cursors]::Hand
 $mainPanel.Controls.Add($btnAdd)
 
@@ -156,7 +155,7 @@ $lv.BackColor = $c.Panel
 $lv.ForeColor = $c.Text
 $lv.BorderStyle = 'FixedSingle'
 $lv.HeaderStyle = 'Nonclickable'
-$lv.Font = New-Object Drawing.Font('Segoe UI', 9.75, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
+$lv.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
 
 # Columns
 $lv.Columns.Add('File Name', 320) | Out-Null
@@ -177,8 +176,7 @@ $lblHint.Location = New-Object Drawing.Point(520, 310)
 $lblHint.Size = New-Object Drawing.Size(450, 40)
 $lblHint.TextAlign = 'MiddleCenter'
 $lblHint.ForeColor = $c.TextMuted
-$lblHint.Font = New-Object Drawing.Font('Segoe UI', 11, [Drawing.FontStyle]::Italic, [Drawing.GraphicsUnit]::Point)
-$lblHint.UseCompatibleTextRendering = $false
+$lblHint.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Italic, [Drawing.GraphicsUnit]::Point)
 $lblHint.BackColor = [Drawing.Color]::Transparent
 $mainPanel.Controls.Add($lblHint)
 $lblHint.BringToFront()
@@ -325,8 +323,7 @@ $btnConvert.BackColor = $c.Accent
 $btnConvert.ForeColor = $c.Text
 $btnConvert.FlatStyle = 'Flat'
 $btnConvert.FlatAppearance.BorderSize = 0
-$btnConvert.Font = New-Object Drawing.Font('Segoe UI', 20, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Point)
-$btnConvert.UseCompatibleTextRendering = $false
+$btnConvert.Font = New-Object Drawing.Font('Segoe UI', 18, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Point)
 $btnConvert.Cursor = [Windows.Forms.Cursors]::Hand
 $bottomBar.Controls.Add($btnConvert)
 
