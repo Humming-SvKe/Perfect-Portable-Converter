@@ -39,8 +39,9 @@ if not exist "%GUI%" (
 REM Kill cached PowerShell
 taskkill /F /IM powershell.exe >nul 2>&1
 
-REM Launch GUI with error handling
-powershell -NoProfile -ExecutionPolicy Bypass -STA -File "%GUI%"
+:: Launch main GUI (Dark theme)
+echo Starting Apowersoft-style Video Converter...
+powershell -NoProfile -ExecutionPolicy Bypass -STA -File "%~dp0PPC-GUI-Dark.ps1"
 
 REM If we reach here, the GUI exited or failed
 if errorlevel 1 (
