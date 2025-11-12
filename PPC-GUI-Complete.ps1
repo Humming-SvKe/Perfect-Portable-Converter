@@ -409,20 +409,44 @@ $btnAdd.Add_Click({
         $ofd.Filter = 'Video Files|*.mp4;*.avi;*.mkv;*.mov;*.wmv;*.flv;*.webm;*.m4v;*.mpg;*.mpeg;*.ts;*.mts;*.m2ts|All Files|*.*'
         $ofd.Multiselect = $true
         $ofd.Title = 'Select Video Files'
-        $ofd.InitialDirectory = [Environment]::GetFolderPath('MyVideos')
         
-        $result = $ofd.ShowDialog($form)
-        if($result -eq [Windows.Forms.DialogResult]::OK) {
-            foreach($f in $ofd.FileNames) {
-                if(Test-Path $f) {
-                    Add-VideoFile $f
+        $dialogResult = $ofd.ShowDialog()
+        
+        if($dialogResult -eq [Windows.Forms.DialogResult]::OK) {
+            $selectedFiles = $ofd.FileNames
+            
+            if($selectedFiles.Count -eq 0) {
+                [Windows.Forms.MessageBox]::Show('No files selected', 'Info', 'OK', 'Information')
+                return
+            }
+            
+            foreach($filePath in $selectedFiles) {
+                if(Test-Path $filePath) {
+                    # Direct add to ListView (bypass function for testing)
+                    $fileInfo = Get-Item $filePath
+                    $listItem = New-Object Windows.Forms.ListViewItem($fileInfo.Name)
+                    $listItem.SubItems.Add(('{0:N2} MB' -f ($fileInfo.Length/1MB)))
+                    $listItem.SubItems.Add('-')
+                    $listItem.SubItems.Add('-')
+                    $listItem.SubItems.Add($fileInfo.Extension.TrimStart('.').ToUpper())
+                    $listItem.SubItems.Add($cmbFormat.Text)
+                    $listItem.SubItems.Add('Ready')
+                    $listItem.Tag = @{ Path = $filePath; Watermark = $null; Subtitle = $null }
+                    
+                    $lv.Items.Add($listItem) | Out-Null
+                    $script:files += $filePath
+                    
+                    if($lv.Items.Count -eq 1) { $lblHint.Visible = $false }
                 } else {
-                    [Windows.Forms.MessageBox]::Show("File not found: $f", 'Error', 'OK', 'Error')
+                    [Windows.Forms.MessageBox]::Show("File not found:`n$filePath", 'Error', 'OK', 'Error')
                 }
             }
+            
+            # Show success message
+            [Windows.Forms.MessageBox]::Show("Added $($selectedFiles.Count) file(s) to list", 'Success', 'OK', 'Information')
         }
     } catch {
-        [Windows.Forms.MessageBox]::Show("Error opening file dialog: $($_.Exception.Message)", 'Error', 'OK', 'Error')
+        [Windows.Forms.MessageBox]::Show("Error in Add Files:`n$($_.Exception.Message)`n`nStack:`n$($_.ScriptStackTrace)", 'Error', 'OK', 'Error')
     }
 })
 
