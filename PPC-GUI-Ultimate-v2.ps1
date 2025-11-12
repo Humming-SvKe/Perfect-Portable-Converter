@@ -123,7 +123,7 @@ $Config = @{
   default_format = 'mp4';
   profiles = @(
     @{ 
-      name='MP4 - Same as source (H.264; AAC; 128Kbps; Stereo)'; 
+      name='Fast 1080p - H264 (AAC 128k Stereo)'; 
       engine='ffmpeg'; 
       format='mp4'; 
       vcodec='libx264'; 
@@ -133,7 +133,7 @@ $Config = @{
       args='-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -ac 2' 
     },
     @{ 
-      name='MP4 - High Quality 1080p (H.264; AAC; 160Kbps; Stereo)'; 
+      name='High Quality - 1080p H264 (AAC 160k Stereo)'; 
       engine='ffmpeg'; 
       format='mp4'; 
       vcodec='libx264'; 
@@ -143,7 +143,7 @@ $Config = @{
       args='-c:v libx264 -preset medium -crf 20 -c:a aac -b:a 160k -ac 2' 
     },
     @{ 
-      name='MP4 - Small 720p (H.264; AAC; 128Kbps; Stereo)'; 
+      name='Small Size - 720p H264 (AAC 128k Stereo)'; 
       engine='ffmpeg'; 
       format='mp4'; 
       vcodec='libx264'; 
@@ -153,7 +153,7 @@ $Config = @{
       args='-vf scale=1280:-2 -c:v libx264 -preset veryfast -crf 25 -c:a aac -b:a 128k -ac 2' 
     },
     @{ 
-      name='MKV - H.265/HEVC (AAC; 160Kbps; Stereo)'; 
+      name='HEVC/H265 - MKV (AAC 160k Stereo)'; 
       engine='handbrake'; 
       format='mkv'; 
       vcodec='x265'; 
@@ -172,10 +172,25 @@ if (Test-Path $Cfg) {
   } 
 }
 
-# WinForms
+# WinForms with DPI awareness
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
+[System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
+
+# Enable DPI awareness for sharp text
+try {
+    Add-Type -TypeDefinition @'
+    using System.Runtime.InteropServices;
+    public class DpiAwareness {
+        [DllImport("user32.dll")]
+        public static extern bool SetProcessDPIAware();
+    }
+'@
+    [DpiAwareness]::SetProcessDPIAware() | Out-Null
+} catch {
+    # DPI awareness already set or not supported
+}
 
 # ===================================
 # MODERN DARK MODE COLORS
@@ -317,7 +332,7 @@ $lvTasks.GridLines = $false
 $lvTasks.BackColor = $ColorBg
 $lvTasks.ForeColor = $ColorText
 $lvTasks.BorderStyle = 'None'
-$lvTasks.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+$lvTasks.Font = New-Object System.Drawing.Font('Segoe UI', 10)
 $lvTasks.HeaderStyle = 'Nonclickable'
 $lvTasks.Columns.Add("File", 280) | Out-Null
 $lvTasks.Columns.Add("Format", 70) | Out-Null
@@ -329,6 +344,18 @@ $lvTasks.Columns.Add("Profile", 240) | Out-Null
 $lvTasks.Columns.Add("Status", 120) | Out-Null
 $lvTasks.AllowDrop = $true
 $form.Controls.Add($lvTasks)
+
+# Hint label (shows when list is empty)
+$lblHint = New-Object System.Windows.Forms.Label
+$lblHint.Text = "Click '+ Add Files' button or drag & drop video files here to start"
+$lblHint.AutoSize = $false
+$lblHint.TextAlign = 'MiddleCenter'
+$lblHint.Dock = 'Fill'
+$lblHint.ForeColor = $ColorTextDim
+$lblHint.BackColor = $ColorBg
+$lblHint.Font = New-Object System.Drawing.Font('Segoe UI', 12, [System.Drawing.FontStyle]::Italic)
+$form.Controls.Add($lblHint)
+$lblHint.BringToFront()
 
 # ===================================
 # BOTTOM BAR (Profile, Output, Convert)
@@ -412,6 +439,11 @@ $script:OutputPath = $Out
 # ===================================
 function Add-Task([string]$filePath) {
     if(-not (Test-Path $filePath)){ return }
+    
+    # Hide hint label when first file is added
+    if($lvTasks.Items.Count -eq 0 -and $lblHint){
+        $lblHint.Visible = $false
+    }
     
     $fileName = [System.IO.Path]::GetFileName($filePath)
     $fileSize = [math]::Round((Get-Item $filePath).Length / 1MB, 2)
@@ -744,12 +776,20 @@ $btnRemove.Add_Click({
     foreach($item in $lvTasks.SelectedItems){
         $lvTasks.Items.Remove($item)
     }
+    # Show hint if list is now empty
+    if($lvTasks.Items.Count -eq 0 -and $lblHint){
+        $lblHint.Visible = $true
+    }
 })
 
 # Clear all
 $btnClear.Add_Click({
     $lvTasks.Items.Clear()
     $script:Tasks = @()
+    # Show hint when cleared
+    if($lblHint){
+        $lblHint.Visible = $true
+    }
 })
 
 # Browse output
