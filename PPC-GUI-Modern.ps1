@@ -66,7 +66,7 @@ $headerPanel.Controls.Add($headerLabel)
 $headerSubLabel = New-Object System.Windows.Forms.Label
 $headerSubLabel.Text = 'Modern Edition - FFmpeg & HandBrake Support'
 $headerSubLabel.Font = New-Object System.Drawing.Font('Segoe UI', 10)
-$headerSubLabel.ForegroundColor = [System.Drawing.Color]::FromArgb(224, 240, 255)
+$headerSubLabel.ForeColor = [System.Drawing.Color]::FromArgb(224, 240, 255)
 $headerSubLabel.Location = New-Object System.Drawing.Point(15, 50)
 $headerSubLabel.AutoSize = $true
 $headerPanel.Controls.Add($headerSubLabel)
