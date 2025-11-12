@@ -881,18 +881,18 @@ $btnConvert.Add_Click({
                 if($proc.ExitCode -eq 0 -and (Test-Path $outputFile)){
                     $fi = Get-Item -LiteralPath $outputFile
                     if($fi.Length -gt 0){
-                        $item.SubItems[7].Text = "✓ Success"
+                        $item.SubItems[7].Text = "Success"
                         $item.ForeColor = $ColorSuccess
                         Write-Log "  Success - $([math]::Round($fi.Length/1MB, 2)) MB"
                         $okCount++
                     } else {
-                        $item.SubItems[7].Text = "✗ Failed (empty)"
+                        $item.SubItems[7].Text = "Failed (empty)"
                         $item.ForeColor = $ColorError
                         Write-Log "  Failed - output empty"
                         $failCount++
                     }
                 } else {
-                    $item.SubItems[7].Text = "✗ Failed"
+                    $item.SubItems[7].Text = "Failed"
                     $item.ForeColor = $ColorError
                     Write-Log "  Failed - exit code: $($proc.ExitCode)"
                     $failCount++
@@ -904,18 +904,18 @@ $btnConvert.Add_Click({
                 if($proc.ExitCode -eq 0 -and (Test-Path $outputFile)){
                     $fi = Get-Item -LiteralPath $outputFile
                     if($fi.Length -gt 0){
-                        $item.SubItems[7].Text = "✓ Success"
+                        $item.SubItems[7].Text = "Success"
                         $item.ForeColor = $ColorSuccess
                         Write-Log "  Success - $([math]::Round($fi.Length/1MB, 2)) MB"
                         $okCount++
                     } else {
-                        $item.SubItems[7].Text = "✗ Failed (empty)"
+                        $item.SubItems[7].Text = "Failed (empty)"
                         $item.ForeColor = $ColorError
                         Write-Log "  Failed - output empty"
                         $failCount++
                     }
                 } else {
-                    $item.SubItems[7].Text = "✗ Failed"
+                    $item.SubItems[7].Text = "Failed"
                     $item.ForeColor = $ColorError
                     Write-Log "  Failed - exit code: $($proc.ExitCode)"
                     $failCount++
@@ -927,7 +927,7 @@ $btnConvert.Add_Click({
             if($task.SubtitlePath -and (Test-Path $subTemp)){ Remove-Item $subTemp -Force -ErrorAction SilentlyContinue }
             
         } catch {
-            $item.SubItems[7].Text = "✗ Error"
+            $item.SubItems[7].Text = "Error"
             $item.ForeColor = $ColorError
             Write-Log "  Error: $($_.Exception.Message)"
             $failCount++
@@ -945,7 +945,7 @@ $btnConvert.Add_Click({
     $btnConvert.Text = 'CONVERT'
     $form.Cursor = [System.Windows.Forms.Cursors]::Default
     
-    Show-Message "Conversion complete!`n`n✓ Successful: $okCount`n✗ Failed: $failCount" "Done"
+    Show-Message "Conversion complete!`n`nSuccessful: $okCount`nFailed: $failCount" "Done"
 })
 
 # Populate profiles
