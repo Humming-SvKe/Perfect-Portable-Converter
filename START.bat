@@ -1,21 +1,22 @@
 @echo off
 setlocal EnableExtensions
-REM Professional Portable Converter - Ultimate Edition v2
-REM Simple launcher - No fallbacks, just the latest version
+REM Professional Portable Converter - Ultimate Edition v3
+REM Responsive Design: Works from 800x600 to 8K
 
 set "SCRIPT_DIR=%~dp0"
-set "GUI=%SCRIPT_DIR%PPC-GUI-Ultimate-v2.ps1"
+set "GUI=%SCRIPT_DIR%PPC-GUI-Ultimate-v3.ps1"
 
 echo.
 echo ========================================
 echo  Professional Portable Converter
-echo  Ultimate Edition v2 (Build 2c11e30)
+echo  Ultimate Edition v3 (Build v3.0.0)
+echo  Responsive: 800x600 to 8K
 echo ========================================
 echo.
 
 REM Check if script exists
 if not exist "%GUI%" (
-    echo [ERROR] PPC-GUI-Ultimate-v2.ps1 not found!
+    echo [ERROR] PPC-GUI-Ultimate-v3.ps1 not found!
     echo.
     echo Expected location: %GUI%
     echo.
@@ -34,5 +35,3 @@ echo.
 
 REM Launch with clean slate
 powershell -NoProfile -ExecutionPolicy Bypass -STA -File "%GUI%"
-
-REM Don't pause - let GUI handle its own lifecycle
