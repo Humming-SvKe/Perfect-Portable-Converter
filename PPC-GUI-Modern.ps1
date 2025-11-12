@@ -526,17 +526,21 @@ foreach($p in $Config.profiles){ [void]$cmbProfile.Items.Add($p.name) }
 if($cmbProfile.Items.Count -gt 0){ $cmbProfile.SelectedIndex = 0 }
 
 # Helper: Add log
-function Add-GuiLog([string]$msg){
-    $txtLog.Dispatcher.Invoke([Action]{
-        $txtLog.AppendText("$msg`r`n")
-        $txtLog.ScrollToEnd()
-    }, 'Normal')
+function Add-GuiLog {
+    param(
+        [string]$msg,
+        [System.Drawing.Color]$ForegroundColor = [System.Drawing.Color]::Black
+    )
+    
+    $txtLog.AppendText("$msg`r`n")
+    $txtLog.SelectionStart = $txtLog.Text.Length
+    $txtLog.ScrollToCaret()
     Write-Log $msg
 }
 
 # Helper: Show message
 function Show-Message([string]$msg, [string]$title = 'Info'){
-    [System.Windows.MessageBox]::Show($msg, $title)
+    [System.Windows.Forms.MessageBox]::Show($msg, $title)
 }
 
 # Event: Add files
@@ -602,12 +606,12 @@ $btnStart.Add_Click({
     }
 
     # Disable UI
-    $btnAddFiles.IsEnabled = $false
-    $btnAddWatermark.IsEnabled = $false
-    $btnAddSubtitle.IsEnabled = $false
-    $btnOutputFolder.IsEnabled = $false
-    $btnStart.IsEnabled = $false
-    $cmbProfile.IsEnabled = $false
+    $btnAddFiles.Enabled = $false
+    $btnAddWatermark.Enabled = $false
+    $btnAddSubtitle.Enabled = $false
+    $btnOutputFolder.Enabled = $false
+    $btnStart.Enabled = $false
+    $cmbProfile.Enabled = $false
 
     $p = $Config.profiles[$cmbProfile.SelectedIndex]
     $total = $lstFiles.Items.Count
@@ -615,73 +619,119 @@ $btnStart.Add_Click({
     $okCount = 0
     $failCount = 0
 
-    Add-GuiLog "========================================`r`nStarting batch conversion...`r`nProfile: $($p.name)`r`nTotal files: $total`r`n========================================"
+    Add-GuiLog "========================================"
+    Add-GuiLog "Starting batch conversion..."
+    Add-GuiLog "Profile: $($p.name)"
+    Add-GuiLog "Total files: $total"
+    Add-GuiLog "========================================"
 
-    # Process in background
-    $runspace = [runspacefactory]::CreateRunspace()
-    $runspace.ApartmentState = 'STA'
-    $runspace.ThreadOptions = 'ReuseThread'
-    $runspace.Open()
+    # Install binaries if needed
+    $ffmpeg = Join-Path $Bins "ffmpeg.exe"
+    $handbrake = Join-Path $Bins "HandBrakeCLI.exe"
     
-    $powershell = [powershell]::Create()
-    $powershell.Runspace = $runspace
+    if(-not (Test-Path $ffmpeg)){
+        Add-GuiLog "Installing FFmpeg..."
+        $script:FfmpegPath = Install-FFTools
+        $ffmpeg = $script:FfmpegPath
+    }
     
-    [void]$powershell.AddScript({
-        param($files, $profile, $outPath, $wmPath, $subPath, $bins, $temp, $logs, $addLog)
+    if($p.engine -eq 'handbrake' -and -not (Test-Path $handbrake)){
+        Add-GuiLog "Installing HandBrake..."
+        Install-HandBrake
+    }
+
+    # Process each file
+    foreach($inputFile in $lstFiles.Items){
+        $current++
+        $percent = [math]::Round(($current / $total) * 100, 1)
         
-        # Conversion logic here (simplified for demo - you would add full FFmpeg/HandBrake logic)
-        $current = 0
-        foreach($file in $files){
-            $current++
-            $percent = [math]::Round(($current / $files.Count) * 100, 1)
-            $msg = "[$current/$($files.Count)] ($percent%) Processing: $(Split-Path $file -Leaf)"
-            & $addLog $msg
-            
-            # Simulate conversion
-            Start-Sleep -Milliseconds 500
-            
-            $okMsg = "  Success - Conversion complete"
-            & $addLog $okMsg
-        }
+        Add-GuiLog ""
+        Add-GuiLog "[$current/$total] ($percent%) Processing: $(Split-Path $inputFile -Leaf)"
         
-        $finalMsg = "Batch conversion complete!"
-        & $addLog $finalMsg
-    })
-    
-    [void]$powershell.AddArgument($lstFiles.Items)
-    [void]$powershell.AddArgument($p)
-    [void]$powershell.AddArgument($script:OutputPath)
-    [void]$powershell.AddArgument($script:WatermarkPath)
-    [void]$powershell.AddArgument($script:SubtitlePath)
-    [void]$powershell.AddArgument($Bins)
-    [void]$powershell.AddArgument($Temp)
-    [void]$powershell.AddArgument($Logs)
-    [void]$powershell.AddArgument(${function:Add-GuiLog})
-    
-    $asyncResult = $powershell.BeginInvoke()
-    
-    # Monitor completion
-    $timer = New-Object System.Windows.Threading.DispatcherTimer
-    $timer.Interval = [TimeSpan]::FromMilliseconds(100)
-    $timer.Add_Tick({
-        if($asyncResult.IsCompleted){
-            $timer.Stop()
-            $powershell.EndInvoke($asyncResult)
-            $powershell.Dispose()
-            $runspace.Close()
+        $fileName = [System.IO.Path]::GetFileNameWithoutExtension($inputFile)
+        $outputFile = Join-Path $script:OutputPath "$fileName.$($p.format)"
+        
+        try {
+            # Apply watermark if set
+            $processedInput = $inputFile
+            if($script:WatermarkPath){
+                Add-GuiLog "  Applying watermark..."
+                $wmTemp = Join-Path $Temp "$fileName-wm.mp4"
+                $wmArgs = @(
+                    '-i', $inputFile,
+                    '-i', $script:WatermarkPath,
+                    '-filter_complex', 'overlay=W-w-10:H-h-10',
+                    '-c:a', 'copy',
+                    '-y', $wmTemp
+                )
+                & $ffmpeg @wmArgs 2>&1 | Out-Null
+                $processedInput = $wmTemp
+            }
             
-            # Re-enable UI
-            $btnAddFiles.IsEnabled = $true
-            $btnAddWatermark.IsEnabled = $true
-            $btnAddSubtitle.IsEnabled = $true
-            $btnOutputFolder.IsEnabled = $true
-            $btnStart.IsEnabled = $true
-            $cmbProfile.IsEnabled = $true
+            # Apply subtitles if set
+            if($script:SubtitlePath){
+                Add-GuiLog "  Burning subtitles..."
+                $subTemp = Join-Path $Temp "$fileName-sub.mp4"
+                $subArgs = @(
+                    '-i', $processedInput,
+                    '-vf', "subtitles='$($script:SubtitlePath -replace '\\','/')'",
+                    '-c:a', 'copy',
+                    '-y', $subTemp
+                )
+                & $ffmpeg @subArgs 2>&1 | Out-Null
+                $processedInput = $subTemp
+            }
             
-            Show-Message "Conversion complete!" "Done"
+            # Main conversion
+            Add-GuiLog "  Converting with $($p.engine)..."
+            
+            if($p.engine -eq 'ffmpeg'){
+                $ffArgs = @('-i', $processedInput) + $p.args.Split(' ') + @('-y', $outputFile)
+                $proc = Start-Process -FilePath $ffmpeg -ArgumentList $ffArgs -NoNewWindow -PassThru -Wait
+                if($proc.ExitCode -eq 0){
+                    Add-GuiLog "  ✓ Success - saved to: $(Split-Path $outputFile -Leaf)" -ForegroundColor Green
+                    $okCount++
+                } else {
+                    Add-GuiLog "  ✗ Failed - FFmpeg error code: $($proc.ExitCode)" -ForegroundColor Red
+                    $failCount++
+                }
+            } elseif($p.engine -eq 'handbrake'){
+                $hbArgs = @('-i', $processedInput, '-o', $outputFile) + $p.args.Split(' ')
+                $proc = Start-Process -FilePath $handbrake -ArgumentList $hbArgs -NoNewWindow -PassThru -Wait
+                if($proc.ExitCode -eq 0){
+                    Add-GuiLog "  ✓ Success - saved to: $(Split-Path $outputFile -Leaf)" -ForegroundColor Green
+                    $okCount++
+                } else {
+                    Add-GuiLog "  ✗ Failed - HandBrake error code: $($proc.ExitCode)" -ForegroundColor Red
+                    $failCount++
+                }
+            }
+            
+            # Cleanup temp files
+            if($script:WatermarkPath -and (Test-Path $wmTemp)){ Remove-Item $wmTemp -Force }
+            if($script:SubtitlePath -and (Test-Path $subTemp)){ Remove-Item $subTemp -Force }
+            
+        } catch {
+            Add-GuiLog "  ✗ Error: $($_.Exception.Message)" -ForegroundColor Red
+            $failCount++
         }
-    })
-    $timer.Start()
+    }
+    
+    Add-GuiLog ""
+    Add-GuiLog "========================================"
+    Add-GuiLog "Batch conversion complete!"
+    Add-GuiLog "Successful: $okCount | Failed: $failCount"
+    Add-GuiLog "========================================"
+    
+    # Re-enable UI
+    $btnAddFiles.Enabled = $true
+    $btnAddWatermark.Enabled = $true
+    $btnAddSubtitle.Enabled = $true
+    $btnOutputFolder.Enabled = $true
+    $btnStart.Enabled = $true
+    $cmbProfile.Enabled = $true
+    
+    Show-Message "Conversion complete!`n`nSuccessful: $okCount`nFailed: $failCount" "Done"
 })
 
 # Show window
