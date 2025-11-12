@@ -27,14 +27,18 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
 
-# DPI Awareness
+# DPI Awareness - improved
 Add-Type @'
 using System.Runtime.InteropServices;
 public class Display {
-    [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+    [DllImport("shcore.dll")]
+    public static extern int SetProcessDpiAwareness(int value);
 }
 '@
-[Display]::SetProcessDPIAware()
+try { [Display]::SetProcessDpiAwareness(2) } catch { }
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.Application]::EnableVisualStyles()
+[System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 
 # Apowersoft Dark Palette
 $c = @{
@@ -55,12 +59,12 @@ $c = @{
 # ===================================
 $form = New-Object Windows.Forms.Form
 $form.Text = 'Apowersoft Video Converter Studio'
-$form.Size = New-Object Drawing.Size(1280, 720)
-$form.MinimumSize = New-Object Drawing.Size(1100, 600)
+$form.Size = New-Object Drawing.Size(1400, 800)
+$form.MinimumSize = New-Object Drawing.Size(1200, 700)
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = $c.Bg
 $form.ForeColor = $c.Text
-$form.Font = New-Object Drawing.Font('Segoe UI', 9)
+$form.Font = New-Object Drawing.Font('Segoe UI', 9.75, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
 
 # ===================================
 # TOP TABS (Convert, Split, MV, Download, Record)
@@ -85,9 +89,10 @@ foreach($tab in $tabs) {
     $btn = New-Object Windows.Forms.Button
     $btn.Text = "$($tab.icon) $($tab.label)"
     $btn.Location = New-Object Drawing.Point($tabX, 10)
-    $btn.Size = New-Object Drawing.Size(140, 32)
+    $btn.Size = New-Object Drawing.Size(150, 34)
     $btn.FlatStyle = 'Flat'
-    $btn.Font = New-Object Drawing.Font('Segoe UI', 9)
+    $btn.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
+    $btn.UseCompatibleTextRendering = $false
     
     if($tab.active) {
         $btn.BackColor = [Drawing.Color]::FromArgb(57,65,75)
@@ -102,7 +107,7 @@ foreach($tab in $tabs) {
     $btn.FlatAppearance.BorderSize = 1
     $btn.Cursor = [Windows.Forms.Cursors]::Hand
     $tabPanel.Controls.Add($btn)
-    $tabX += 150
+    $tabX += 160
 }
 
 # ===================================
@@ -127,19 +132,20 @@ $mainPanel.Controls.Add($listHeader)
 $btnAdd = New-Object Windows.Forms.Button
 $btnAdd.Text = '+ Add Files'
 $btnAdd.Location = New-Object Drawing.Point(20, 40)
-$btnAdd.Size = New-Object Drawing.Size(120, 36)
+$btnAdd.Size = New-Object Drawing.Size(130, 38)
 $btnAdd.BackColor = $c.Accent
 $btnAdd.ForeColor = $c.Text
 $btnAdd.FlatStyle = 'Flat'
 $btnAdd.FlatAppearance.BorderSize = 0
-$btnAdd.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Bold)
+$btnAdd.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Point)
+$btnAdd.UseCompatibleTextRendering = $false
 $btnAdd.Cursor = [Windows.Forms.Cursors]::Hand
 $mainPanel.Controls.Add($btnAdd)
 
 # ListView (Task List) - Dark styled
 $lv = New-Object Windows.Forms.ListView
-$lv.Location = New-Object Drawing.Point(20, 85)
-$lv.Size = New-Object Drawing.Size(1220, 420)
+$lv.Location = New-Object Drawing.Point(20, 90)
+$lv.Size = New-Object Drawing.Size(1340, 460)
 $lv.Anchor = 'Top,Left,Right,Bottom'
 $lv.View = 'Details'
 $lv.FullRowSelect = $true
@@ -150,28 +156,29 @@ $lv.BackColor = $c.Panel
 $lv.ForeColor = $c.Text
 $lv.BorderStyle = 'FixedSingle'
 $lv.HeaderStyle = 'Nonclickable'
-$lv.Font = New-Object Drawing.Font('Segoe UI', 9)
+$lv.Font = New-Object Drawing.Font('Segoe UI', 9.75, [Drawing.FontStyle]::Regular, [Drawing.GraphicsUnit]::Point)
 
 # Columns
-$lv.Columns.Add('File Name', 280) | Out-Null
-$lv.Columns.Add('Size', 90) | Out-Null
-$lv.Columns.Add('Duration', 90) | Out-Null
-$lv.Columns.Add('Resolution', 110) | Out-Null
-$lv.Columns.Add('Format', 80) | Out-Null
-$lv.Columns.Add('Output Format', 150) | Out-Null
-$lv.Columns.Add('Status', 120) | Out-Null
-$lv.Columns.Add('Actions', 120) | Out-Null
+$lv.Columns.Add('File Name', 320) | Out-Null
+$lv.Columns.Add('Size', 100) | Out-Null
+$lv.Columns.Add('Duration', 100) | Out-Null
+$lv.Columns.Add('Resolution', 120) | Out-Null
+$lv.Columns.Add('Format', 90) | Out-Null
+$lv.Columns.Add('Output Format', 180) | Out-Null
+$lv.Columns.Add('Status', 130) | Out-Null
+$lv.Columns.Add('Actions', 140) | Out-Null
 
 $mainPanel.Controls.Add($lv)
 
 # Hint label (drag and drop)
 $lblHint = New-Object Windows.Forms.Label
 $lblHint.Text = "Drag and drop video files here or click '+ Add Files' to get started"
-$lblHint.Location = New-Object Drawing.Point(480, 280)
-$lblHint.Size = New-Object Drawing.Size(400, 40)
+$lblHint.Location = New-Object Drawing.Point(520, 310)
+$lblHint.Size = New-Object Drawing.Size(450, 40)
 $lblHint.TextAlign = 'MiddleCenter'
 $lblHint.ForeColor = $c.TextMuted
-$lblHint.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Italic)
+$lblHint.Font = New-Object Drawing.Font('Segoe UI', 11, [Drawing.FontStyle]::Italic, [Drawing.GraphicsUnit]::Point)
+$lblHint.UseCompatibleTextRendering = $false
 $lblHint.BackColor = [Drawing.Color]::Transparent
 $mainPanel.Controls.Add($lblHint)
 $lblHint.BringToFront()
@@ -311,14 +318,15 @@ $bottomBar.Controls.Add($chkShutdown)
 # CONVERT BUTTON (Main action - big orange/blue button)
 $btnConvert = New-Object Windows.Forms.Button
 $btnConvert.Text = 'CONVERT'
-$btnConvert.Location = New-Object Drawing.Point(900, 20)
-$btnConvert.Size = New-Object Drawing.Size(340, 120)
+$btnConvert.Location = New-Object Drawing.Point(980, 20)
+$btnConvert.Size = New-Object Drawing.Size(380, 120)
 $btnConvert.Anchor = 'Right,Bottom'
 $btnConvert.BackColor = $c.Accent
 $btnConvert.ForeColor = $c.Text
 $btnConvert.FlatStyle = 'Flat'
 $btnConvert.FlatAppearance.BorderSize = 0
-$btnConvert.Font = New-Object Drawing.Font('Segoe UI', 18, [Drawing.FontStyle]::Bold)
+$btnConvert.Font = New-Object Drawing.Font('Segoe UI', 20, [Drawing.FontStyle]::Bold, [Drawing.GraphicsUnit]::Point)
+$btnConvert.UseCompatibleTextRendering = $false
 $btnConvert.Cursor = [Windows.Forms.Cursors]::Hand
 $bottomBar.Controls.Add($btnConvert)
 
