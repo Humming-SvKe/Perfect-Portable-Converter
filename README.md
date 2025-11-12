@@ -1,62 +1,137 @@
-# Perfect Portable Converter
+# Professional Portable Converter - Ultimate Edition v2
 
-Plne prenosný nástroj na konverziu videa pomocou FFmpeg a HandBrake. Offline ZIP obsahuje všetko – stačí rozbaliť a spustiť `START.bat`.
+Modern Dark Mode video converter with FFmpeg and HandBrake support. Zero installation - just download, extract, and run `START.bat`.
 
-## 🎨 Modern GUI Edition (NEW!)
+## 🚀 Quick Start
 
-**Aero-style Windows XP/Vista dizajn s gradientmi, tieňmi a modernými funkciami!**
+**Download latest version:**
+```
+https://github.com/Humming-SvKe/Perfect-Portable-Converter/archive/refs/heads/main.zip
+```
 
-### ✨ Features
-- 🎨 **Aero theme** - modré gradienty, tieň efekty, zaoblené rohy
-- 📁 **Drag & drop support** - pridávaj súbory jednoducho
-- 🖼️ **Watermark overlay** - pridaj logo/watermark na videá
-- 💬 **Subtitle burn-in** - natrvalo vpáľ titulky (SRT/ASS)
-- ⚡ **Dual-engine** - FFmpeg + HandBrake profily v jednom GUI
-- 📊 **Real-time progress** - vidíš [X/Y] súborov a percentá
-- 🎯 **5 optimalizovaných profilov** - rýchly 1080p, malý 720p, x265...
-
-### 🚀 Quick Start
+**Extract and run:**
 ```bat
 START.bat
 ```
-→ Automaticky načíta moderné GUI s Aero témou
 
-### 📸 Vizuálny dizajn
+That's it! The modern dark UI will launch automatically.
+
+## ✨ Features
+
+- 🎨 **Modern Dark Mode** - Professional flat UI inspired by VS Code
+- 📁 **Drag & Drop** - Add video files easily
+- 🖼️ **Watermark Support** - Add logos to your videos
+- 💬 **Subtitle Burn-in** - Permanently embed SRT/ASS subtitles
+- ⚡ **Dual Engine** - FFmpeg + HandBrake profiles
+- 📊 **Real-time Progress** - Live conversion status
+- 🎯 **4 Optimized Presets** - Fast 1080p, High Quality, Small Size, HEVC/H265
+- � **DPI Aware** - Crystal clear on high-DPI monitors
+- 🌐 **No Installation** - Portable, runs from any folder
+
+## �️ System Requirements
+
+- Windows 10/11 (64-bit)
+- PowerShell 5.1+ (included in Windows)
+- 4GB RAM minimum
+- Internet connection (first run only - downloads FFmpeg/HandBrake)
+
+## 📋 Usage
+
+1. **Run START.bat**
+2. **Click "+ Add Files"** or drag & drop videos
+3. **Select conversion profile** from dropdown
+4. **Choose output folder** (optional)
+5. **Click CONVERT**
+
+## �️ Troubleshooting
+
+**Problem: GUI looks wrong or features missing**
+```powershell
+# Run version checker
+.\VERIFY-VERSION.ps1
 ```
-┌─────────────────────────────────────────┐
-│  Perfect Portable Converter      [_][□][X]│
-│  Modern Edition                         │
-├─────────────────────────────────────────┤
-│ [📁 Add] [🖼️ Watermark] [💬 Subtitle]   │
-│ [▶ Start Conversion]                    │
-│                                         │
-│ Profile: HandBrake - Fast 1080p ▼      │
-│                                         │
-│ Files to Convert:                       │
-│ ┌─────────────────────────────────┐    │
-│ │ video1.mp4                      │    │
-│ │ video2.mkv                      │    │
-│ └─────────────────────────────────┘    │
-│                                         │
-│ Activity Log:                           │
-│ ┌─────────────────────────────────┐    │
-│ │ [1/2] (50%) Processing...       │    │
-│ │ ✓ Conversion complete           │    │
-│ └─────────────────────────────────┘    │
-└─────────────────────────────────────────┘
+
+If it shows errors, re-download from GitHub link above.
+
+**Problem: "Display is still wrong"**
+
+Make sure you don't have nested folders:
+- ✓ Correct: `C:\vcs\Perfect-Portable-Converter-main\START.bat`
+- ✗ Wrong: `C:\vcs\...\...\...\START.bat`
+
+See `INSTALL-INSTRUCTIONS.md` for detailed fix.
+
+## 📁 Project Structure
+
+```
+Perfect-Portable-Converter/
+├── START.bat                  ← Main launcher
+├── PPC-GUI-Ultimate-v2.ps1    ← Modern Dark Mode GUI
+├── VERIFY-VERSION.ps1         ← Version checker
+├── INSTALL-INSTRUCTIONS.md    ← Setup guide
+├── config/
+│   └── defaults.json          ← Conversion profiles
+├── binaries/                  ← FFmpeg/HandBrake (auto-downloaded)
+├── input/                     ← Source videos
+├── output/                    ← Converted videos
+├── overlays/                  ← Watermark images
+└── subtitles/                 ← SRT/ASS files
 ```
 
----
+## 🔄 Conversion Profiles
 
-## HandBrake mode ⚡
-This repository now includes a **modern HandBrake-based converter** `PPC-HandBrake.ps1` that can be launched via `START.bat /HB` or by running the script directly.
+**Fast 1080p - H264 (AAC 128k Stereo)**
+- Preset: veryfast, CRF 23
+- Best for: Quick conversions, streaming
 
-### ✨ Features
-- **Automatic downloads** - HandBrakeCLI and FFmpeg auto-download on first run
-- **Real-time progress** - See FPS, ETA, and percentage during encoding
-- **Color-coded output** - Green (success), Red (error), Yellow (warning), Cyan (info)
-- **Batch processing** - Shows current file X/Y and overall progress %
-- **Watermark overlay** - Place `watermark.png` in `overlays/` (or per-file `filename.png`)
+**High Quality - 1080p H264 (AAC 160k Stereo)**
+- Preset: medium, CRF 20
+- Best for: Archival, high-quality output
+
+**Small Size - 720p H264 (AAC 128k Stereo)**
+- Scaled to 1280x720, CRF 25
+- Best for: Mobile devices, web upload
+
+**HEVC/H265 - MKV (AAC 160k Stereo)**
+- Uses HandBrake engine
+- Best for: Space-efficient archival (50% smaller than H264)
+
+## 💡 Tips
+
+- **Watermarks**: Place `watermark.png` in `overlays/` folder
+- **Subtitles**: Place `video_name.srt` in `subtitles/` folder (must match video filename)
+- **Custom profiles**: Edit `config/defaults.json` to add your own presets
+- **Batch conversion**: Add multiple files before clicking CONVERT
+
+## 🐛 Known Issues
+
+None currently! All major bugs fixed as of commit `2c11e30`.
+
+## 📝 Changelog
+
+**v2.0.0 (2025-11-12) - Ultimate Edition**
+- ✨ Complete UI rewrite with modern Dark Mode
+- 🔧 Fixed critical PropertyNotFoundException error
+- 📐 Improved layout with better control positioning
+- 🎨 DPI awareness for high-resolution displays
+- 📋 Hint label for empty file list
+- 🔒 Minimum window size constraint
+
+See `CHANGELOG-v2.md` for full history.
+
+## 📜 License
+
+MIT License - See `LICENSE` file
+
+## 🤝 Contributing
+
+Contributions welcome! Please open an issue or pull request on GitHub.
+
+## 🔗 Links
+
+- **GitHub**: https://github.com/Humming-SvKe/Perfect-Portable-Converter
+- **Issues**: https://github.com/Humming-SvKe/Perfect-Portable-Converter/issues
+- **Latest Release**: https://github.com/Humming-SvKe/Perfect-Portable-Converter/archive/refs/heads/main.zip
 - **Subtitle burn-in** - Place `filename.srt` in `subtitles/` for automatic burn-in
 - **Visual indicators** - Modern progress display with clear step-by-step feedback
 
