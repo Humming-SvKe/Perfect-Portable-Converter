@@ -864,6 +864,11 @@ $btnConvert.Add_Click({
     $ffmpeg = Join-Path $Bins "ffmpeg.exe"
     $handbrake = Join-Path $Bins "HandBrakeCLI.exe"
     
+    # Ensure profile has engine property (fallback to ffmpeg)
+    if (-not $p.PSObject.Properties['engine']) {
+        Add-Member -InputObject $p -MemberType NoteProperty -Name 'engine' -Value 'ffmpeg' -Force
+    }
+    
     if(-not (Test-Path $ffmpeg)){
         Write-Log "Installing FFmpeg..."
         $ffmpeg = Install-FFTools

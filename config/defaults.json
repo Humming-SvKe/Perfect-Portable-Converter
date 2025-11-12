@@ -1,8 +1,9 @@
 {
   "default_format": "mp4",
   "profiles": [
-    { "name": "Fast 1080p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 23, "acodec": "aac", "ab": "160k", "scale": "" },
-    { "name": "Small 720p H264", "vcodec": "libx264", "preset": "veryfast", "crf": 26, "acodec": "aac", "ab": "128k", "scale": "1280:-2" },
-    { "name": "Device WhatsApp H264", "vcodec": "libx264", "preset": "veryfast", "crf": 24, "acodec": "aac", "ab": "128k", "scale": "1280:-2", "maxdur": 180 }
+    { "name": "Fast 1080p - H264 (AAC 128k Stereo)", "engine": "ffmpeg", "format": "mp4", "vcodec": "libx264", "acodec": "aac", "ab": "128k", "channels": "2", "args": "-c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -ac 2" },
+    { "name": "High Quality - 1080p H264 (AAC 160k Stereo)", "engine": "ffmpeg", "format": "mp4", "vcodec": "libx264", "acodec": "aac", "ab": "160k", "channels": "2", "args": "-c:v libx264 -preset medium -crf 20 -c:a aac -b:a 160k -ac 2" },
+    { "name": "Small Size - 720p H264 (AAC 128k Stereo)", "engine": "ffmpeg", "format": "mp4", "vcodec": "libx264", "acodec": "aac", "ab": "128k", "channels": "2", "args": "-vf scale=1280:-2 -c:v libx264 -preset veryfast -crf 25 -c:a aac -b:a 128k -ac 2" },
+    { "name": "HEVC/H265 - MKV (AAC 160k Stereo)", "engine": "handbrake", "format": "mkv", "vcodec": "x265", "acodec": "aac", "ab": "160k", "channels": "2", "args": "-e x265 -q 26 -E av_aac -B 160" }
   ]
 }
