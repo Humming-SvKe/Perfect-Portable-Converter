@@ -13,3 +13,17 @@ node_modules/
 dist/
 build/
 .env
+
+# Old GUI versions (deprecated - only PPC-GUI-Complete.ps1 is maintained)
+PPC-GUI.ps1
+PPC-GUI-Modern.ps1
+PPC-GUI-Modern.ps1.backup
+PPC-GUI-Modern-v2.ps1
+PPC-GUI-Modern-v3.ps1
+PPC-GUI-Ultimate.ps1
+PPC-GUI-Ultimate-v2.ps1
+PPC-GUI-Ultimate-v3.ps1
+PPC-GUI-Final.ps1
+PPC-GUI-Modern-Clean.ps1
+TEST-ULTIMATE-V2.ps1
+VERIFY-VERSION.ps1
