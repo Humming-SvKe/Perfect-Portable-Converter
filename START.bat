@@ -3,6 +3,7 @@ setlocal EnableExtensions
 REM Perfect Portable Converter - START (GUI first, fallback to CLI)
 
 set "SCRIPT_DIR=%~dp0"
+set "GUI_ULTIMATE_V2=%SCRIPT_DIR%PPC-GUI-Ultimate-v2.ps1"
 set "GUI_ULTIMATE=%SCRIPT_DIR%PPC-GUI-Ultimate.ps1"
 set "GUI_MODERN_V3=%SCRIPT_DIR%PPC-GUI-Modern-v3.ps1"
 set "GUI_MODERN_V2=%SCRIPT_DIR%PPC-GUI-Modern-v2.ps1"
@@ -15,7 +16,10 @@ REM Force CLI if parameter /CLI is supplied
 if /I "%~1"=="/CLI" goto CLI
 if /I "%~1"=="/HB" goto HB
 
-REM Prefer Ultimate GUI (Dark Mode + All Features)
+REM Prefer Ultimate GUI v2 (Modern Dark Mode - NO Win95 borders!)
+if exist "%GUI_ULTIMATE_V2%" goto GUI_ULTIMATE_V2
+
+REM Fallback to Ultimate GUI v1
 if exist "%GUI_ULTIMATE%" goto GUI_ULTIMATE
 
 REM Fallback to Modern GUI v3 (Professional style)
@@ -52,6 +56,10 @@ goto END
 
 :GUI_ULTIMATE
 powershell -NoProfile -ExecutionPolicy Bypass -STA -File "%GUI_ULTIMATE%"
+goto END
+
+:GUI_ULTIMATE_V2
+powershell -NoProfile -ExecutionPolicy Bypass -STA -File "%GUI_ULTIMATE_V2%"
 goto END
 
 :HB

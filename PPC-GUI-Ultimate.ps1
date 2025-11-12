@@ -193,17 +193,48 @@ $form.Height = 720
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = $ColorBg
 $form.ForeColor = $ColorText
-$form.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+$form.Font = New-Object System.Drawing.Font('Segoe UI', 10)
+$form.FormBorderStyle = 'Sizable'
 
 # ============================================
-# TOP TABS
+# TOP TABS (Custom painted for modern look)
 # ============================================
 $tabControl = New-Object System.Windows.Forms.TabControl
 $tabControl.Location = New-Object System.Drawing.Point(0, 0)
-$tabControl.Size = New-Object System.Drawing.Size(1280, 40)
-$tabControl.Appearance = 'Buttons'
-$tabControl.BackColor = $ColorPanel
+$tabControl.Size = New-Object System.Drawing.Size(1264, 680)
+$tabControl.Appearance = 'FlatButtons'
+$tabControl.BackColor = $ColorBg
 $tabControl.ForeColor = $ColorText
+$tabControl.DrawMode = 'OwnerDrawFixed'
+$tabControl.ItemSize = New-Object System.Drawing.Size(100, 40)
+$tabControl.SizeMode = 'Fixed'
+$tabControl.Padding = New-Object System.Drawing.Point(20, 5)
+
+# Custom paint for modern tabs
+$tabControl.Add_DrawItem({
+    param($sender, $e)
+    $tabPage = $sender.TabPages[$e.Index]
+    $tabRect = $sender.GetTabRect($e.Index)
+    
+    # Background
+    if($e.Index -eq $sender.SelectedIndex){
+        $brush = New-Object System.Drawing.SolidBrush($ColorAccent)
+    } else {
+        $brush = New-Object System.Drawing.SolidBrush($ColorPanel)
+    }
+    $e.Graphics.FillRectangle($brush, $tabRect)
+    $brush.Dispose()
+    
+    # Text
+    $textBrush = New-Object System.Drawing.SolidBrush($ColorText)
+    $sf = New-Object System.Drawing.StringFormat
+    $sf.Alignment = [System.Drawing.StringAlignment]::Center
+    $sf.LineAlignment = [System.Drawing.StringAlignment]::Center
+    $e.Graphics.DrawString($tabPage.Text, $sender.Font, $textBrush, $tabRect, $sf)
+    $textBrush.Dispose()
+    $sf.Dispose()
+})
+
 $form.Controls.Add($tabControl)
 
 $tabConvert = New-Object System.Windows.Forms.TabPage
@@ -240,14 +271,51 @@ $tabControl.Controls.Add($tabRecord)
 # CONVERT TAB - TASK LIST
 # ============================================
 $lvTasks = New-Object System.Windows.Forms.ListView
-$lvTasks.Location = New-Object System.Drawing.Point(10, 50)
-$lvTasks.Size = New-Object System.Drawing.Size(1240, 480)
+$lvTasks.Location = New-Object System.Drawing.Point(20, 15)
+$lvTasks.Size = New-Object System.Drawing.Size(1220, 470)
 $lvTasks.View = 'Details'
 $lvTasks.FullRowSelect = $true
-$lvTasks.GridLines = $true
+$lvTasks.GridLines = $false
 $lvTasks.BackColor = $ColorPanel
 $lvTasks.ForeColor = $ColorText
-$lvTasks.BorderStyle = 'FixedSingle'
+$lvTasks.BorderStyle = 'None'
+$lvTasks.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+$lvTasks.HeaderStyle = 'Nonclickable'
+$lvTasks.OwnerDraw = $true
+
+# Custom header drawing
+$lvTasks.Add_DrawColumnHeader({
+    param($sender, $e)
+    $e.Graphics.FillRectangle((New-Object System.Drawing.SolidBrush($ColorBg)), $e.Bounds)
+    $textBrush = New-Object System.Drawing.SolidBrush($ColorInactive)
+    $sf = New-Object System.Drawing.StringFormat
+    $sf.LineAlignment = [System.Drawing.StringAlignment]::Center
+    $textRect = New-Object System.Drawing.Rectangle($e.Bounds.X + 5, $e.Bounds.Y, $e.Bounds.Width - 5, $e.Bounds.Height)
+    $e.Graphics.DrawString($e.Header.Text, $sender.Font, $textBrush, $textRect, $sf)
+    $textBrush.Dispose()
+    $sf.Dispose()
+})
+
+# Custom item drawing
+$lvTasks.Add_DrawItem({
+    param($sender, $e)
+    $e.DrawDefault = $true
+})
+
+$lvTasks.Add_DrawSubItem({
+    param($sender, $e)
+    if($e.Item.Selected){
+        $e.Graphics.FillRectangle((New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(70, 70, 80))), $e.Bounds)
+    }
+    $textBrush = New-Object System.Drawing.SolidBrush($ColorText)
+    $sf = New-Object System.Drawing.StringFormat
+    $sf.LineAlignment = [System.Drawing.StringAlignment]::Center
+    $textRect = New-Object System.Drawing.Rectangle($e.Bounds.X + 5, $e.Bounds.Y, $e.Bounds.Width - 5, $e.Bounds.Height)
+    $e.Graphics.DrawString($e.SubItem.Text, $sender.Font, $textBrush, $textRect, $sf)
+    $textBrush.Dispose()
+    $sf.Dispose()
+})
+
 $lvTasks.Columns.Add("File", 250) | Out-Null
 $lvTasks.Columns.Add("Format", 80) | Out-Null
 $lvTasks.Columns.Add("Duration", 80) | Out-Null
@@ -262,104 +330,126 @@ $tabConvert.Controls.Add($lvTasks)
 # BOTTOM BAR
 # ============================================
 $panelBottom = New-Object System.Windows.Forms.Panel
-$panelBottom.Location = New-Object System.Drawing.Point(0, 540)
-$panelBottom.Size = New-Object System.Drawing.Size(1280, 100)
-$panelBottom.BackColor = $ColorPanel
+$panelBottom.Location = New-Object System.Drawing.Point(0, 500)
+$panelBottom.Size = New-Object System.Drawing.Size(1264, 140)
+$panelBottom.BackColor = $ColorBg
 $tabConvert.Controls.Add($panelBottom)
 
 # Row 1: Buttons
 $btnClearAll = New-Object System.Windows.Forms.Button
 $btnClearAll.Text = 'Clear task list'
-$btnClearAll.Location = New-Object System.Drawing.Point(10, 10)
-$btnClearAll.Size = New-Object System.Drawing.Size(120, 30)
+$btnClearAll.Location = New-Object System.Drawing.Point(20, 15)
+$btnClearAll.Size = New-Object System.Drawing.Size(130, 35)
 $btnClearAll.BackColor = $ColorPanel
 $btnClearAll.ForeColor = $ColorText
 $btnClearAll.FlatStyle = 'Flat'
-$btnClearAll.FlatAppearance.BorderColor = $ColorBorder
+$btnClearAll.FlatAppearance.BorderSize = 0
+$btnClearAll.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(70, 70, 80)
+$btnClearAll.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+$btnClearAll.Cursor = [System.Windows.Forms.Cursors]::Hand
 $panelBottom.Controls.Add($btnClearAll)
 
 $btnRemoveSelected = New-Object System.Windows.Forms.Button
 $btnRemoveSelected.Text = 'Remove selected'
-$btnRemoveSelected.Location = New-Object System.Drawing.Point(140, 10)
-$btnRemoveSelected.Size = New-Object System.Drawing.Size(120, 30)
+$btnRemoveSelected.Location = New-Object System.Drawing.Point(160, 15)
+$btnRemoveSelected.Size = New-Object System.Drawing.Size(130, 35)
 $btnRemoveSelected.BackColor = $ColorPanel
 $btnRemoveSelected.ForeColor = $ColorText
 $btnRemoveSelected.FlatStyle = 'Flat'
-$btnRemoveSelected.FlatAppearance.BorderColor = $ColorBorder
+$btnRemoveSelected.FlatAppearance.BorderSize = 0
+$btnRemoveSelected.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(70, 70, 80)
+$btnRemoveSelected.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+$btnRemoveSelected.Cursor = [System.Windows.Forms.Cursors]::Hand
 $panelBottom.Controls.Add($btnRemoveSelected)
 
 $chkMerge = New-Object System.Windows.Forms.CheckBox
 $chkMerge.Text = 'Merge into one file'
-$chkMerge.Location = New-Object System.Drawing.Point(270, 15)
-$chkMerge.Size = New-Object System.Drawing.Size(150, 20)
+$chkMerge.Location = New-Object System.Drawing.Point(300, 20)
+$chkMerge.Size = New-Object System.Drawing.Size(170, 25)
 $chkMerge.ForeColor = $ColorText
+$chkMerge.FlatStyle = 'Flat'
+$chkMerge.Font = New-Object System.Drawing.Font('Segoe UI', 9)
 $panelBottom.Controls.Add($chkMerge)
 
 # Row 2: Profile selector and output path
 $lblProfile = New-Object System.Windows.Forms.Label
 $lblProfile.Text = 'Profile:'
-$lblProfile.Location = New-Object System.Drawing.Point(10, 50)
-$lblProfile.Size = New-Object System.Drawing.Size(50, 20)
-$lblProfile.ForeColor = $ColorText
+$lblProfile.Location = New-Object System.Drawing.Point(20, 65)
+$lblProfile.Size = New-Object System.Drawing.Size(60, 25)
+$lblProfile.ForeColor = $ColorInactive
+$lblProfile.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+$lblProfile.TextAlign = 'MiddleLeft'
 $panelBottom.Controls.Add($lblProfile)
 
 $cmbProfile = New-Object System.Windows.Forms.ComboBox
-$cmbProfile.Location = New-Object System.Drawing.Point(65, 47)
-$cmbProfile.Size = New-Object System.Drawing.Size(450, 25)
+$cmbProfile.Location = New-Object System.Drawing.Point(85, 63)
+$cmbProfile.Size = New-Object System.Drawing.Size(450, 30)
 $cmbProfile.DropDownStyle = 'DropDownList'
 $cmbProfile.BackColor = $ColorPanel
 $cmbProfile.ForeColor = $ColorText
 $cmbProfile.FlatStyle = 'Flat'
+$cmbProfile.Font = New-Object System.Drawing.Font('Segoe UI', 9)
 $panelBottom.Controls.Add($cmbProfile)
 
 $txtOutput = New-Object System.Windows.Forms.TextBox
-$txtOutput.Location = New-Object System.Drawing.Point(525, 47)
-$txtOutput.Size = New-Object System.Drawing.Size(300, 25)
+$txtOutput.Location = New-Object System.Drawing.Point(545, 63)
+$txtOutput.Size = New-Object System.Drawing.Size(350, 30)
 $txtOutput.Text = $Out
 $txtOutput.BackColor = $ColorPanel
 $txtOutput.ForeColor = $ColorText
 $txtOutput.BorderStyle = 'FixedSingle'
+$txtOutput.Font = New-Object System.Drawing.Font('Segoe UI', 9)
 $panelBottom.Controls.Add($txtOutput)
 
 $btnBrowseOutput = New-Object System.Windows.Forms.Button
 $btnBrowseOutput.Text = '...'
-$btnBrowseOutput.Location = New-Object System.Drawing.Point(835, 47)
-$btnBrowseOutput.Size = New-Object System.Drawing.Size(40, 25)
+$btnBrowseOutput.Location = New-Object System.Drawing.Point(905, 63)
+$btnBrowseOutput.Size = New-Object System.Drawing.Size(40, 30)
 $btnBrowseOutput.BackColor = $ColorPanel
 $btnBrowseOutput.ForeColor = $ColorText
 $btnBrowseOutput.FlatStyle = 'Flat'
-$btnBrowseOutput.FlatAppearance.BorderColor = $ColorBorder
+$btnBrowseOutput.FlatAppearance.BorderSize = 0
+$btnBrowseOutput.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(70, 70, 80)
+$btnBrowseOutput.Cursor = [System.Windows.Forms.Cursors]::Hand
 $panelBottom.Controls.Add($btnBrowseOutput)
 
 $btnSettings = New-Object System.Windows.Forms.Button
 $btnSettings.Text = 'Settings'
-$btnSettings.Location = New-Object System.Drawing.Point(885, 47)
-$btnSettings.Size = New-Object System.Drawing.Size(80, 25)
+$btnSettings.Location = New-Object System.Drawing.Point(955, 63)
+$btnSettings.Size = New-Object System.Drawing.Size(90, 30)
 $btnSettings.BackColor = $ColorPanel
 $btnSettings.ForeColor = $ColorText
 $btnSettings.FlatStyle = 'Flat'
-$btnSettings.FlatAppearance.BorderColor = $ColorBorder
+$btnSettings.FlatAppearance.BorderSize = 0
+$btnSettings.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(70, 70, 80)
+$btnSettings.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+$btnSettings.Cursor = [System.Windows.Forms.Cursors]::Hand
 $panelBottom.Controls.Add($btnSettings)
 
 $btnOpenFolder = New-Object System.Windows.Forms.Button
 $btnOpenFolder.Text = 'Open'
-$btnOpenFolder.Location = New-Object System.Drawing.Point(975, 47)
-$btnOpenFolder.Size = New-Object System.Drawing.Size(80, 25)
+$btnOpenFolder.Location = New-Object System.Drawing.Point(1055, 63)
+$btnOpenFolder.Size = New-Object System.Drawing.Size(90, 30)
 $btnOpenFolder.BackColor = $ColorPanel
 $btnOpenFolder.ForeColor = $ColorText
 $btnOpenFolder.FlatStyle = 'Flat'
-$btnOpenFolder.FlatAppearance.BorderColor = $ColorBorder
+$btnOpenFolder.FlatAppearance.BorderSize = 0
+$btnOpenFolder.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(70, 70, 80)
+$btnOpenFolder.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+$btnOpenFolder.Cursor = [System.Windows.Forms.Cursors]::Hand
 $panelBottom.Controls.Add($btnOpenFolder)
 
 $btnConvert = New-Object System.Windows.Forms.Button
 $btnConvert.Text = 'Convert'
-$btnConvert.Location = New-Object System.Drawing.Point(1065, 10)
-$btnConvert.Size = New-Object System.Drawing.Size(190, 62)
+$btnConvert.Location = New-Object System.Drawing.Point(1055, 15)
+$btnConvert.Size = New-Object System.Drawing.Size(190, 78)
 $btnConvert.BackColor = $ColorAccent
 $btnConvert.ForeColor = $ColorText
 $btnConvert.FlatStyle = 'Flat'
 $btnConvert.FlatAppearance.BorderSize = 0
-$btnConvert.Font = New-Object System.Drawing.Font('Segoe UI', 12, [System.Drawing.FontStyle]::Bold)
+$btnConvert.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(60, 185, 235)
+$btnConvert.Font = New-Object System.Drawing.Font('Segoe UI', 14, [System.Drawing.FontStyle]::Bold)
+$btnConvert.Cursor = [System.Windows.Forms.Cursors]::Hand
 $panelBottom.Controls.Add($btnConvert)
 
 # ============================================
@@ -433,44 +523,55 @@ function Show-Message([string]$msg, [string]$title = 'Info'){
 function Show-PresetEditor {
     $formPreset = New-Object System.Windows.Forms.Form
     $formPreset.Text = 'Preset Editor'
-    $formPreset.Width = 600
-    $formPreset.Height = 500
+    $formPreset.Width = 650
+    $formPreset.Height = 550
     $formPreset.StartPosition = 'CenterScreen'
     $formPreset.BackColor = $ColorBg
     $formPreset.ForeColor = $ColorText
     $formPreset.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+    $formPreset.FormBorderStyle = 'FixedDialog'
+    $formPreset.MaximizeBox = $false
     
-    # Tabs: High Quality, Standard, Custom
-    $tabPreset = New-Object System.Windows.Forms.TabControl
-    $tabPreset.Location = New-Object System.Drawing.Point(10, 10)
-    $tabPreset.Size = New-Object System.Drawing.Size(560, 380)
-    $tabPreset.BackColor = $ColorPanel
-    $tabPreset.ForeColor = $ColorText
-    $formPreset.Controls.Add($tabPreset)
+    # Title
+    $lblTitle = New-Object System.Windows.Forms.Label
+    $lblTitle.Text = 'Custom Preset Editor'
+    $lblTitle.Location = New-Object System.Drawing.Point(20, 15)
+    $lblTitle.Size = New-Object System.Drawing.Size(600, 30)
+    $lblTitle.ForeColor = $ColorText
+    $lblTitle.Font = New-Object System.Drawing.Font('Segoe UI', 14, [System.Drawing.FontStyle]::Bold)
+    $formPreset.Controls.Add($lblTitle)
     
-    $tabCustom = New-Object System.Windows.Forms.TabPage
-    $tabCustom.Text = 'Custom'
-    $tabCustom.BackColor = $ColorBg
-    $tabCustom.ForeColor = $ColorText
-    $tabPreset.Controls.Add($tabCustom)
+    $yPos = 60
     
-    # Video Settings
-    $yPos = 20
+    $yPos = 60
+    
+    # Video Section Header
+    $lblVideoSection = New-Object System.Windows.Forms.Label
+    $lblVideoSection.Text = '━━━ VIDEO SETTINGS ━━━'
+    $lblVideoSection.Location = New-Object System.Drawing.Point(20, $yPos)
+    $lblVideoSection.Size = New-Object System.Drawing.Size(600, 25)
+    $lblVideoSection.ForeColor = $ColorAccent
+    $lblVideoSection.Font = New-Object System.Drawing.Font('Segoe UI', 10, [System.Drawing.FontStyle]::Bold)
+    $formPreset.Controls.Add($lblVideoSection)
+    
+    $yPos += 35
     
     $lblVCodec = New-Object System.Windows.Forms.Label
     $lblVCodec.Text = 'Video codec:'
-    $lblVCodec.Location = New-Object System.Drawing.Point(20, $yPos)
-    $lblVCodec.Size = New-Object System.Drawing.Size(120, 20)
-    $tabCustom.Controls.Add($lblVCodec)
+    $lblVCodec.Location = New-Object System.Drawing.Point(30, $yPos)
+    $lblVCodec.Size = New-Object System.Drawing.Size(140, 25)
+    $lblVCodec.ForeColor = $ColorText
+    $formPreset.Controls.Add($lblVCodec)
     
     $cmbVCodec = New-Object System.Windows.Forms.ComboBox
-    $cmbVCodec.Location = New-Object System.Drawing.Point(150, $yPos)
-    $cmbVCodec.Size = New-Object System.Drawing.Size(200, 25)
+    $cmbVCodec.Location = New-Object System.Drawing.Point(180, $yPos)
+    $cmbVCodec.Size = New-Object System.Drawing.Size(250, 25)
     $cmbVCodec.Items.AddRange(@('H.264', 'H.265/HEVC', 'VP9', 'Copy'))
     $cmbVCodec.SelectedIndex = 0
     $cmbVCodec.BackColor = $ColorPanel
     $cmbVCodec.ForeColor = $ColorText
-    $tabCustom.Controls.Add($cmbVCodec)
+    $cmbVCodec.FlatStyle = 'Flat'
+    $formPreset.Controls.Add($cmbVCodec)
     
     $yPos += 40
     $lblFPS = New-Object System.Windows.Forms.Label
