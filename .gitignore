@@ -27,3 +27,7 @@ PPC-GUI-Final.ps1
 PPC-GUI-Modern-Clean.ps1
 TEST-ULTIMATE-V2.ps1
 VERIFY-VERSION.ps1
+
+# Only START.bat is needed
+*.bat
+!START.bat
