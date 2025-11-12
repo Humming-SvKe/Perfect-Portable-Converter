@@ -24,15 +24,26 @@ function Write-Log([string]$m){
   $ts=(Get-Date).ToString('yyyy-MM-dd HH:mm:ss'); "$ts | $m" | Out-File -Append -Encoding UTF8 $LogFile
 }
 
-# Helper functions for binary installation
+# TLS + download helpers (from original PPC-GUI.ps1)
+function Ensure-Tls12 { 
+  try { 
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 
+  } catch {} 
+}
+
 function Download-File([string]$Url, [string]$Dst) {
-  $wc = New-Object System.Net.WebClient
-  $wc.DownloadFile($Url, $Dst)
+  Ensure-Tls12
+  Write-Log "Downloading: $Url"
+  Invoke-WebRequest -UseBasicParsing -Uri $Url -OutFile $Dst
 }
 
 function Expand-Zip([string]$Zip, [string]$Dest) {
-  Add-Type -AssemblyName System.IO.Compression.FileSystem
-  [System.IO.Compression.ZipFile]::ExtractToDirectory($Zip, $Dest)
+  try { 
+    Expand-Archive -Path $Zip -DestinationPath $Dest -Force 
+  } catch { 
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($Zip, $Dest) 
+  }
 }
 
 function Install-FFTools {
@@ -243,7 +254,8 @@ $grpOptional.Controls.Add($lblWatermark)
 $txtWatermark = New-Object System.Windows.Forms.TextBox
 $txtWatermark.Location = New-Object System.Drawing.Point(100, 27)
 $txtWatermark.Size = New-Object System.Drawing.Size(300, 25)
-$txtWatermark.PlaceholderText = 'None selected'
+$txtWatermark.Text = '(None selected)'
+$txtWatermark.ForeColor = [System.Drawing.Color]::Gray
 $grpOptional.Controls.Add($txtWatermark)
 
 $btnBrowseWatermark = New-Object System.Windows.Forms.Button
@@ -261,7 +273,8 @@ $grpOptional.Controls.Add($lblSubtitle)
 $txtSubtitle = New-Object System.Windows.Forms.TextBox
 $txtSubtitle.Location = New-Object System.Drawing.Point(100, 67)
 $txtSubtitle.Size = New-Object System.Drawing.Size(300, 25)
-$txtSubtitle.PlaceholderText = 'None selected'
+$txtSubtitle.Text = '(None selected)'
+$txtSubtitle.ForeColor = [System.Drawing.Color]::Gray
 $grpOptional.Controls.Add($txtSubtitle)
 
 $btnBrowseSubtitle = New-Object System.Windows.Forms.Button
@@ -479,6 +492,7 @@ $btnBrowseWatermark.Add_Click({
     if($ofd.ShowDialog() -eq 'OK'){
         $script:WatermarkPath = $ofd.FileName
         $txtWatermark.Text = [System.IO.Path]::GetFileName($ofd.FileName)
+        $txtWatermark.ForeColor = [System.Drawing.Color]::Black
         Add-GuiLog "Watermark: $($ofd.FileName)"
     }
 })
@@ -490,6 +504,7 @@ $btnBrowseSubtitle.Add_Click({
     if($ofd.ShowDialog() -eq 'OK'){
         $script:SubtitlePath = $ofd.FileName
         $txtSubtitle.Text = [System.IO.Path]::GetFileName($ofd.FileName)
+        $txtSubtitle.ForeColor = [System.Drawing.Color]::Black
         Add-GuiLog "Subtitle: $($ofd.FileName)"
     }
 })
@@ -538,6 +553,10 @@ $btnStart.Add_Click({
     $btnClearFiles.Enabled = $false
     $btnStart.Enabled = $false
     $cmbProfile.Enabled = $false
+    $btnBrowseWatermark.Enabled = $false
+    $btnBrowseSubtitle.Enabled = $false
+    $btnBrowseOutput.Enabled = $false
+    $form.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
 
     $p = $Config.profiles[$cmbProfile.SelectedIndex]
     $total = $lstFiles.Items.Count
@@ -661,6 +680,10 @@ $btnStart.Add_Click({
     $btnClearFiles.Enabled = $true
     $btnStart.Enabled = $true
     $cmbProfile.Enabled = $true
+    $btnBrowseWatermark.Enabled = $true
+    $btnBrowseSubtitle.Enabled = $true
+    $btnBrowseOutput.Enabled = $true
+    $form.Cursor = [System.Windows.Forms.Cursors]::Default
     
     Show-Message "Conversion complete!`n`nSuccessful: $okCount`nFailed: $failCount" "Done"
 })
