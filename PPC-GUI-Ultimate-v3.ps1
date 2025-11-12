@@ -136,25 +136,42 @@ $ColorAccentHover = [System.Drawing.Color]::FromArgb(28, 151, 234)
 $ColorSuccess = [System.Drawing.Color]::FromArgb(73, 190, 170)
 $ColorError = [System.Drawing.Color]::FromArgb(244, 71, 71)
 
-# Modern flat button
+# Modern flat button (fixed hover effect)
 function New-Button {
     param([string]$Text, [bool]$Primary = $false)
     
     $btn = New-Object System.Windows.Forms.Button
     $btn.Text = $Text
     $btn.FlatStyle = 'Flat'
-    $btn.BackColor = if($Primary) { $ColorAccent } else { $ColorPanel }
     $btn.ForeColor = $ColorText
     $btn.FlatAppearance.BorderSize = 0
     $btn.Cursor = 'Hand'
     $btn.Font = New-Object System.Drawing.Font('Segoe UI', (Get-Scaled 9), [System.Drawing.FontStyle]::Regular)
     
-    # Hover effect
+    # Store primary state in Tag
+    $btn.Tag = @{ IsPrimary = $Primary }
+    
+    # Set initial color
+    if($Primary) {
+        $btn.BackColor = $ColorAccent
+    } else {
+        $btn.BackColor = $ColorPanel
+    }
+    
+    # Hover effect with proper scope
     $btn.Add_MouseEnter({ 
-        $this.BackColor = if($Primary) { $ColorAccentHover } else { [System.Drawing.Color]::FromArgb(55, 55, 58) }
+        if($this.Tag.IsPrimary) {
+            $this.BackColor = $ColorAccentHover
+        } else {
+            $this.BackColor = [System.Drawing.Color]::FromArgb(55, 55, 58)
+        }
     })
     $btn.Add_MouseLeave({ 
-        $this.BackColor = if($Primary) { $ColorAccent } else { $ColorPanel }
+        if($this.Tag.IsPrimary) {
+            $this.BackColor = $ColorAccent
+        } else {
+            $this.BackColor = $ColorPanel
+        }
     })
     
     return $btn
