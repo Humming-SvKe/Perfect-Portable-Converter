@@ -357,32 +357,44 @@ $script:files = @()
 function Add-VideoFile([string]$path) {
     try {
         if(-not (Test-Path $path)) { 
-            [Windows.Forms.MessageBox]::Show("File not found: $path", 'Error', 'OK', 'Warning')
+            [Windows.Forms.MessageBox]::Show("File not found:`n$path", 'Error', 'OK', 'Warning')
             return 
         }
         if($script:files -contains $path) { 
-            [Windows.Forms.MessageBox]::Show("File already added: $(Split-Path $path -Leaf)", 'Info', 'OK', 'Information')
-            return 
+            return  # Silently ignore duplicates
         }
         
         $file = Get-Item $path
-        $item = $lv.Items.Add($file.Name)
-        $item.SubItems.Add(('{0:N2} MB' -f ($file.Length/1MB))) | Out-Null
-        $item.SubItems.Add('-') | Out-Null
-        $item.SubItems.Add('-') | Out-Null
-        $item.SubItems.Add($file.Extension.TrimStart('.').ToUpper()) | Out-Null
-        $item.SubItems.Add($cmbFormat.Text) | Out-Null
-        $item.SubItems.Add('Ready') | Out-Null
+        
+        # Create ListView item
+        $item = New-Object Windows.Forms.ListViewItem($file.Name)
+        $item.SubItems.Add(('{0:N2} MB' -f ($file.Length/1MB)))  # Size
+        $item.SubItems.Add('-')  # Duration (will be detected later)
+        $item.SubItems.Add('-')  # Resolution (will be detected later)
+        $item.SubItems.Add($file.Extension.TrimStart('.').ToUpper())  # Format
+        $item.SubItems.Add($cmbFormat.Text)  # Output Format
+        $item.SubItems.Add('Ready')  # Status
+        
+        # Store metadata in Tag
         $item.Tag = @{
             Path = $path
             Watermark = $null
             Subtitle = $null
         }
         
+        # Add to ListView
+        $lv.Items.Add($item) | Out-Null
+        
+        # Add to tracking array
         $script:files += $path
-        if($lv.Items.Count -eq 1) { $lblHint.Visible = $false }
+        
+        # Hide hint when first file is added
+        if($lv.Items.Count -eq 1) { 
+            $lblHint.Visible = $false 
+        }
+        
     } catch {
-        [Windows.Forms.MessageBox]::Show("Error adding file: $($_.Exception.Message)", 'Error', 'OK', 'Error')
+        [Windows.Forms.MessageBox]::Show("Error adding file:`n$($_.Exception.Message)", 'Error', 'OK', 'Error')
     }
 }
 
