@@ -355,25 +355,35 @@ $script:files = @()
 # FUNCTIONS
 # ===================================
 function Add-VideoFile([string]$path) {
-    if(-not (Test-Path $path)) { return }
-    if($script:files -contains $path) { return }
-    
-    $file = Get-Item $path
-    $item = $lv.Items.Add($file.Name)
-    $item.SubItems.Add(('{0:N2} MB' -f ($file.Length/1MB))) | Out-Null
-    $item.SubItems.Add('-') | Out-Null
-    $item.SubItems.Add('-') | Out-Null
-    $item.SubItems.Add($file.Extension.TrimStart('.').ToUpper()) | Out-Null
-    $item.SubItems.Add($cmbFormat.Text) | Out-Null
-    $item.SubItems.Add('Ready') | Out-Null
-    $item.Tag = @{
-        Path = $path
-        Watermark = $null
-        Subtitle = $null
+    try {
+        if(-not (Test-Path $path)) { 
+            [Windows.Forms.MessageBox]::Show("File not found: $path", 'Error', 'OK', 'Warning')
+            return 
+        }
+        if($script:files -contains $path) { 
+            [Windows.Forms.MessageBox]::Show("File already added: $(Split-Path $path -Leaf)", 'Info', 'OK', 'Information')
+            return 
+        }
+        
+        $file = Get-Item $path
+        $item = $lv.Items.Add($file.Name)
+        $item.SubItems.Add(('{0:N2} MB' -f ($file.Length/1MB))) | Out-Null
+        $item.SubItems.Add('-') | Out-Null
+        $item.SubItems.Add('-') | Out-Null
+        $item.SubItems.Add($file.Extension.TrimStart('.').ToUpper()) | Out-Null
+        $item.SubItems.Add($cmbFormat.Text) | Out-Null
+        $item.SubItems.Add('Ready') | Out-Null
+        $item.Tag = @{
+            Path = $path
+            Watermark = $null
+            Subtitle = $null
+        }
+        
+        $script:files += $path
+        if($lv.Items.Count -eq 1) { $lblHint.Visible = $false }
+    } catch {
+        [Windows.Forms.MessageBox]::Show("Error adding file: $($_.Exception.Message)", 'Error', 'OK', 'Error')
     }
-    
-    $script:files += $path
-    if($lv.Items.Count -eq 1) { $lblHint.Visible = $false }
 }
 
 # ===================================
@@ -382,15 +392,25 @@ function Add-VideoFile([string]$path) {
 
 # Add Files
 $btnAdd.Add_Click({
-    $ofd = New-Object Windows.Forms.OpenFileDialog
-    $ofd.Filter = 'Video Files|*.mp4;*.avi;*.mkv;*.mov;*.wmv;*.flv;*.webm;*.m4v;*.mpg;*.mpeg;*.ts;*.mts;*.m2ts|All Files|*.*'
-    $ofd.Multiselect = $true
-    $ofd.Title = 'Select Video Files'
-    
-    if($ofd.ShowDialog() -eq 'OK') {
-        foreach($f in $ofd.FileNames) {
-            Add-VideoFile $f
+    try {
+        $ofd = New-Object Windows.Forms.OpenFileDialog
+        $ofd.Filter = 'Video Files|*.mp4;*.avi;*.mkv;*.mov;*.wmv;*.flv;*.webm;*.m4v;*.mpg;*.mpeg;*.ts;*.mts;*.m2ts|All Files|*.*'
+        $ofd.Multiselect = $true
+        $ofd.Title = 'Select Video Files'
+        $ofd.InitialDirectory = [Environment]::GetFolderPath('MyVideos')
+        
+        $result = $ofd.ShowDialog($form)
+        if($result -eq [Windows.Forms.DialogResult]::OK) {
+            foreach($f in $ofd.FileNames) {
+                if(Test-Path $f) {
+                    Add-VideoFile $f
+                } else {
+                    [Windows.Forms.MessageBox]::Show("File not found: $f", 'Error', 'OK', 'Error')
+                }
+            }
         }
+    } catch {
+        [Windows.Forms.MessageBox]::Show("Error opening file dialog: $($_.Exception.Message)", 'Error', 'OK', 'Error')
     }
 })
 
