@@ -144,7 +144,7 @@ $toolbar.Controls.Add($sep1)
 
 # Watermark Button
 $btnWatermark = New-Object Windows.Forms.Button
-$btnWatermark.Text = '🖼 Watermark'
+$btnWatermark.Text = 'Watermark'
 $btnWatermark.Location = New-Object Drawing.Point(360, 12)
 $btnWatermark.Size = New-Object Drawing.Size(110, 36)
 $btnWatermark.Font = New-Object Drawing.Font('Segoe UI', 9)
@@ -157,7 +157,7 @@ $toolbar.Controls.Add($btnWatermark)
 
 # Subtitle Button
 $btnSubtitle = New-Object Windows.Forms.Button
-$btnSubtitle.Text = '💬 Subtitle'
+$btnSubtitle.Text = 'Subtitle'
 $btnSubtitle.Location = New-Object Drawing.Point(480, 12)
 $btnSubtitle.Size = New-Object Drawing.Size(110, 36)
 $btnSubtitle.Font = New-Object Drawing.Font('Segoe UI', 9)
@@ -170,7 +170,7 @@ $toolbar.Controls.Add($btnSubtitle)
 
 # Crop Button
 $btnCrop = New-Object Windows.Forms.Button
-$btnCrop.Text = '✂ Crop'
+$btnCrop.Text = 'Crop'
 $btnCrop.Location = New-Object Drawing.Point(600, 12)
 $btnCrop.Size = New-Object Drawing.Size(90, 36)
 $btnCrop.Font = New-Object Drawing.Font('Segoe UI', 9)
