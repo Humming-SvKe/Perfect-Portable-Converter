@@ -69,10 +69,10 @@ $form.Controls.Add($tabPanel)
 # Tab buttons
 $tabs = @(
     @{label='Convert'; icon='↻'; active=$true},
-    @{label='Split Screen'; icon='▭▭'; active=$false},
-    @{label='Make MV'; icon='🎬'; active=$false},
-    @{label='Download'; icon='⬇'; active=$false},
-    @{label='Record'; icon='⏺'; active=$false}
+    @{label='Split Screen'; icon=''; active=$false},
+    @{label='Make MV'; icon=''; active=$false},
+    @{label='Download'; icon=''; active=$false},
+    @{label='Record'; icon=''; active=$false}
 )
 
 $tabX = 20
@@ -148,14 +148,13 @@ $lv.HeaderStyle = 'Nonclickable'
 $lv.Font = New-Object Drawing.Font('Segoe UI', 10)
 
 # Columns
-$lv.Columns.Add('File Name', 360) | Out-Null
-$lv.Columns.Add('Size', 110) | Out-Null
-$lv.Columns.Add('Duration', 110) | Out-Null
-$lv.Columns.Add('Resolution', 130) | Out-Null
-$lv.Columns.Add('Format', 100) | Out-Null
-$lv.Columns.Add('Output Format', 200) | Out-Null
-$lv.Columns.Add('Status', 140) | Out-Null
-$lv.Columns.Add('Actions', 150) | Out-Null
+$lv.Columns.Add('File Name', 400) | Out-Null
+$lv.Columns.Add('Size', 120) | Out-Null
+$lv.Columns.Add('Duration', 120) | Out-Null
+$lv.Columns.Add('Resolution', 140) | Out-Null
+$lv.Columns.Add('Format', 110) | Out-Null
+$lv.Columns.Add('Output Format', 220) | Out-Null
+$lv.Columns.Add('Status', 160) | Out-Null
 
 $mainPanel.Controls.Add($lv)
 
@@ -363,7 +362,6 @@ $btnAdd.Add_Click({
                 $listItem.SubItems.Add($fileInfo.Extension.TrimStart('.').ToUpper())
                 $listItem.SubItems.Add('MP4 (H.264)')
                 $listItem.SubItems.Add('Ready')
-                $listItem.SubItems.Add('[Edit] [Size]')
                 $listItem.Tag = @{ Path = $filePath; Watermark = $null; Subtitle = $null }
                 
                 $lv.Items.Add($listItem) | Out-Null
@@ -445,10 +443,13 @@ $btnConvert.Add_Click({
     
     $msg = "Ready to convert $($lv.Items.Count) file(s)`n`n"
     $msg += "Format: $($cmbProfile.Text)`n"
-    $msg += "Quality: Fast (CRF 23)`n"
     $msg += "Resolution: Same as source`n"
     $msg += "Output: $($txtOutput.Text)`n`n"
-    $msg += "(FFmpeg/HandBrake integration coming soon)"
+    $msg += "NEXT STEPS:`n"
+    $msg += "1. HandBrake will be downloaded (~15 MB)`n"
+    $msg += "2. Installation takes ~2-3 minutes`n"
+    $msg += "3. Conversion will start automatically`n`n"
+    $msg += "(HandBrake integration coming in next update)"
     
     [Windows.Forms.MessageBox]::Show($msg, 'Conversion Ready', 'OK', 'Information')
 })
@@ -475,7 +476,6 @@ $lv.Add_DragDrop({
                 $listItem.SubItems.Add($fileInfo.Extension.TrimStart('.').ToUpper())
                 $listItem.SubItems.Add('MP4 (H.264)')
                 $listItem.SubItems.Add('Ready')
-                $listItem.SubItems.Add('[Edit] [Size]')
                 $listItem.Tag = @{ Path = $file; Watermark = $null; Subtitle = $null }
                 
                 [void]$lv.Items.Add($listItem)
