@@ -355,9 +355,7 @@ $btnAdd.Add_Click({
         $ofd.Multiselect = $true
         $ofd.Title = 'Select Video Files'
         
-        $dialogResult = $ofd.ShowDialog()
-        
-        if($dialogResult -eq [Windows.Forms.DialogResult]::OK) {
+        if($ofd.ShowDialog($form) -eq [Windows.Forms.DialogResult]::OK) {
             $addedCount = 0
             
             foreach($filePath in $ofd.FileNames) {
@@ -383,7 +381,7 @@ $btnAdd.Add_Click({
                 $listItem.SubItems.Add('[Edit] [Size]')
                 $listItem.Tag = @{ Path = $filePath; Watermark = $null; Subtitle = $null }
                 
-                [void]$lv.Items.Add($listItem)
+                $lv.Items.Add($listItem) | Out-Null
                 $script:files += $filePath
                 $addedCount++
                 
@@ -398,6 +396,7 @@ $btnAdd.Add_Click({
                 $lblStatus.Text = "Added $addedCount file(s) - Ready to convert"
                 $lblStatus.ForeColor = $c.Green
             }
+        }
         }
     } catch {
         [Windows.Forms.MessageBox]::Show("Error:`n$($_.Exception.Message)", 'Error', 'OK', 'Error')
