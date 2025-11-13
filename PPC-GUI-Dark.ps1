@@ -22,13 +22,26 @@ $Ovls = Join-Path $Root 'overlays'
 $script:files = @()
 $script:currentTab = 'Convert'
 
-# WinForms
+# WinForms + Advanced Graphics
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Visual Styles
+# Enable Visual Styles and Text Rendering
 [Windows.Forms.Application]::EnableVisualStyles()
 [Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
+
+# Advanced text rendering hint
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+using System.Drawing;
+using System.Drawing.Text;
+public class TextRender {
+    public static TextRenderingHint GetClearTypeHint() {
+        return TextRenderingHint.ClearTypeGridFit;
+    }
+}
+'@
 
 # Apowersoft Dark Palette
 $c = @{
@@ -54,7 +67,10 @@ $form.MinimumSize = New-Object Drawing.Size(1400, 800)
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = $c.Bg
 $form.ForeColor = $c.Text
-$form.Font = New-Object Drawing.Font('Segoe UI', 10)
+$form.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Regular)
+# Critical for sharp text on Windows
+$form.AutoScaleMode = [Windows.Forms.AutoScaleMode]::Font
+$form.DoubleBuffered = $true
 
 # ===================================
 # TOP TABS (Convert, Split, MV, Download, Record)
