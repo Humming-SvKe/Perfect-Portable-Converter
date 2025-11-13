@@ -55,9 +55,7 @@ $form.StartPosition = 'CenterScreen'
 $form.BackColor = $c.Bg
 $form.ForeColor = $c.Text
 $form.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Regular)
-# Critical for sharp text on Windows
 $form.AutoScaleMode = [Windows.Forms.AutoScaleMode]::Font
-$form.DoubleBuffered = $true
 
 # ===================================
 # TOP TABS (Convert, Split, MV, Download, Record)
