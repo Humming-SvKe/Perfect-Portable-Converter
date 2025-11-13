@@ -68,7 +68,7 @@ $form.Controls.Add($tabPanel)
 
 # Tab buttons
 $tabs = @(
-    @{label='Convert'; icon='↻'; active=$true},
+    @{label='Convert'; icon=''; active=$true},
     @{label='Split Screen'; icon=''; active=$false},
     @{label='Make MV'; icon=''; active=$false},
     @{label='Download'; icon=''; active=$false},
@@ -122,12 +122,12 @@ $mainPanel.Controls.Add($listHeader)
 $btnAdd = New-Object Windows.Forms.Button
 $btnAdd.Text = '+ Add Files'
 $btnAdd.Location = New-Object Drawing.Point(20, 40)
-$btnAdd.Size = New-Object Drawing.Size(140, 40)
+$btnAdd.Size = New-Object Drawing.Size(120, 36)
 $btnAdd.BackColor = $c.Accent
 $btnAdd.ForeColor = $c.Text
 $btnAdd.FlatStyle = 'Flat'
 $btnAdd.FlatAppearance.BorderSize = 0
-$btnAdd.Font = New-Object Drawing.Font('Segoe UI', 10, [Drawing.FontStyle]::Bold)
+$btnAdd.Font = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Bold)
 $btnAdd.Cursor = [Windows.Forms.Cursors]::Hand
 $mainPanel.Controls.Add($btnAdd)
 
@@ -442,14 +442,11 @@ $btnConvert.Add_Click({
     }
     
     $msg = "Ready to convert $($lv.Items.Count) file(s)`n`n"
-    $msg += "Format: $($cmbProfile.Text)`n"
+    $msg += "Profile: $($cmbProfile.Text)`n"
     $msg += "Resolution: Same as source`n"
     $msg += "Output: $($txtOutput.Text)`n`n"
-    $msg += "NEXT STEPS:`n"
-    $msg += "1. HandBrake will be downloaded (~15 MB)`n"
-    $msg += "2. Installation takes ~2-3 minutes`n"
-    $msg += "3. Conversion will start automatically`n`n"
-    $msg += "(HandBrake integration coming in next update)"
+    $msg += "NOTE: Conversion engine (HandBrake/FFmpeg)`n"
+    $msg += "will be integrated in next update."
     
     [Windows.Forms.MessageBox]::Show($msg, 'Conversion Ready', 'OK', 'Information')
 })
