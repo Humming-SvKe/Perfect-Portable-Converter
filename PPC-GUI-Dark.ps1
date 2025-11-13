@@ -397,7 +397,6 @@ $btnAdd.Add_Click({
                 $lblStatus.ForeColor = $c.Green
             }
         }
-        }
     } catch {
         [Windows.Forms.MessageBox]::Show("Error:`n$($_.Exception.Message)", 'Error', 'OK', 'Error')
     }
