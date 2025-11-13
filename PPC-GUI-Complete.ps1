@@ -413,40 +413,48 @@ $btnAdd.Add_Click({
         $dialogResult = $ofd.ShowDialog()
         
         if($dialogResult -eq [Windows.Forms.DialogResult]::OK) {
-            $selectedFiles = $ofd.FileNames
+            $addedCount = 0
             
-            if($selectedFiles.Count -eq 0) {
-                [Windows.Forms.MessageBox]::Show('No files selected', 'Info', 'OK', 'Information')
-                return
-            }
-            
-            foreach($filePath in $selectedFiles) {
-                if(Test-Path $filePath) {
-                    # Direct add to ListView (bypass function for testing)
-                    $fileInfo = Get-Item $filePath
-                    $listItem = New-Object Windows.Forms.ListViewItem($fileInfo.Name)
-                    $listItem.SubItems.Add(('{0:N2} MB' -f ($fileInfo.Length/1MB)))
-                    $listItem.SubItems.Add('-')
-                    $listItem.SubItems.Add('-')
-                    $listItem.SubItems.Add($fileInfo.Extension.TrimStart('.').ToUpper())
-                    $listItem.SubItems.Add($cmbFormat.Text)
-                    $listItem.SubItems.Add('Ready')
-                    $listItem.Tag = @{ Path = $filePath; Watermark = $null; Subtitle = $null }
-                    
-                    $lv.Items.Add($listItem) | Out-Null
-                    $script:files += $filePath
-                    
-                    if($lv.Items.Count -eq 1) { $lblHint.Visible = $false }
-                } else {
+            foreach($filePath in $ofd.FileNames) {
+                if(-not (Test-Path $filePath)) {
                     [Windows.Forms.MessageBox]::Show("File not found:`n$filePath", 'Error', 'OK', 'Error')
+                    continue
+                }
+                
+                # Skip duplicates silently
+                if($script:files -contains $filePath) {
+                    continue
+                }
+                
+                # Add to ListView
+                $fileInfo = Get-Item $filePath
+                $listItem = New-Object Windows.Forms.ListViewItem($fileInfo.Name)
+                $listItem.SubItems.Add(('{0:N2} MB' -f ($fileInfo.Length/1MB)))
+                $listItem.SubItems.Add('-')
+                $listItem.SubItems.Add('-')
+                $listItem.SubItems.Add($fileInfo.Extension.TrimStart('.').ToUpper())
+                $listItem.SubItems.Add($cmbFormat.Text)
+                $listItem.SubItems.Add('Ready')
+                $listItem.Tag = @{ Path = $filePath; Watermark = $null; Subtitle = $null }
+                
+                [void]$lv.Items.Add($listItem)
+                $script:files += $filePath
+                $addedCount++
+                
+                # Hide hint on first file
+                if($lv.Items.Count -ge 1) { 
+                    $lblHint.Visible = $false 
                 }
             }
             
-            # Show success message
-            [Windows.Forms.MessageBox]::Show("Added $($selectedFiles.Count) file(s) to list", 'Success', 'OK', 'Information')
+            # Update status label instead of popup
+            if($addedCount -gt 0) {
+                $lblStatus.Text = "Added $addedCount file(s) - Ready to convert"
+                $lblStatus.ForeColor = $c.Green
+            }
         }
     } catch {
-        [Windows.Forms.MessageBox]::Show("Error in Add Files:`n$($_.Exception.Message)`n`nStack:`n$($_.ScriptStackTrace)", 'Error', 'OK', 'Error')
+        [Windows.Forms.MessageBox]::Show("Error:`n$($_.Exception.Message)", 'Error', 'OK', 'Error')
     }
 })
 
