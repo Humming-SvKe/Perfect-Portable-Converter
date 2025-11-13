@@ -30,19 +30,6 @@ Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
 [Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 
-# Advanced text rendering hint
-Add-Type @'
-using System;
-using System.Runtime.InteropServices;
-using System.Drawing;
-using System.Drawing.Text;
-public class TextRender {
-    public static TextRenderingHint GetClearTypeHint() {
-        return TextRenderingHint.ClearTypeGridFit;
-    }
-}
-'@
-
 # Apowersoft Dark Palette
 $c = @{
     Bg = [Drawing.Color]::FromArgb(45,47,56)           # #2D2F38
