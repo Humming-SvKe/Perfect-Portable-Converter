@@ -16,7 +16,12 @@ $Root = Split-Path -Parent $PSCommandPath
 $Out = Join-Path $Root 'output'
 $Subs = Join-Path $Root 'subtitles'
 $Ovls = Join-Path $Root 'overlays'
-@($Out, $Subs, $Ovls) | ForEach-Object { New-Item -ItemType Directory -Force -Path $_ | Out-Null }
+$Bin = Join-Path $Root 'binaries'
+@($Out, $Subs, $Ovls, $Bin) | ForEach-Object { New-Item -ItemType Directory -Force -Path $_ | Out-Null }
+
+# HandBrake paths
+$HandBrakePath = Join-Path $Bin 'HandBrakeCLI.exe'
+$HandBrakeUrl = 'https://github.com/HandBrake/HandBrake/releases/download/1.8.2/HandBrakeCLI-1.8.2-win-x86_64.zip'
 
 # State
 $script:files = @()
@@ -486,6 +491,89 @@ $lv.Add_DragDrop({
         $lblStatus.Text = "Files added via drag & drop"
         $lblStatus.ForeColor = $c.Green
     }
+})
+
+# ===================================
+# CHECK/DOWNLOAD HANDBRAKE
+# ===================================
+function Download-HandBrake {
+    if(Test-Path $HandBrakePath) {
+        $lblStatus.Text = "HandBrake ready"
+        $lblStatus.ForeColor = $c.Green
+        return
+    }
+    
+    $lblStatus.Text = "Checking HandBrake..."
+    $lblStatus.ForeColor = $c.TextMuted
+    
+    # Show in main window status
+    $lblStatus.Text = "Downloading HandBrake CLI (15 MB)... Please wait"
+    $lblStatus.ForeColor = [Drawing.Color]::FromArgb(255,165,0) # Orange
+    $form.Refresh()
+    
+    $zipPath = Join-Path $Bin 'handbrake.zip'
+    
+    try {
+        # Download with progress
+        $wc = New-Object System.Net.WebClient
+        
+        # Simple progress in status bar
+        $script:lastUpdate = [DateTime]::Now
+        $wc.DownloadProgressChanged = {
+            param($sender, $e)
+            # Update every 500ms to avoid flooding
+            if(([DateTime]::Now - $script:lastUpdate).TotalMilliseconds -gt 500) {
+                $downloaded = [math]::Round($e.BytesReceived / 1MB, 1)
+                $total = [math]::Round($e.TotalBytesToReceive / 1MB, 1)
+                $lblStatus.Text = "Downloading HandBrake: $downloaded MB / $total MB ($($e.ProgressPercentage)%)"
+                $form.Refresh()
+                [Windows.Forms.Application]::DoEvents()
+                $script:lastUpdate = [DateTime]::Now
+            }
+        }
+        
+        Register-ObjectEvent -InputObject $wc -EventName DownloadProgressChanged -Action {
+            $downloaded = [math]::Round($Event.SourceEventArgs.BytesReceived / 1MB, 1)
+            $total = [math]::Round($Event.SourceEventArgs.TotalBytesToReceive / 1MB, 1)
+            $percent = $Event.SourceEventArgs.ProgressPercentage
+            Write-Host "Downloading: $downloaded MB / $total MB ($percent%)" -ForegroundColor Cyan
+        } | Out-Null
+        
+        # Start download
+        $wc.DownloadFileAsync($HandBrakeUrl, $zipPath)
+        
+        # Wait for completion
+        while($wc.IsBusy) {
+            [Windows.Forms.Application]::DoEvents()
+            Start-Sleep -Milliseconds 100
+        }
+        
+        # Cleanup events
+        Get-EventSubscriber | Where-Object { $_.SourceObject -eq $wc } | Unregister-Event
+        
+        # Extract
+        $lblStatus.Text = "Extracting HandBrake..."
+        $lblStatus.ForeColor = [Drawing.Color]::FromArgb(255,165,0)
+        $form.Refresh()
+        
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $Bin)
+        
+        Remove-Item $zipPath -Force
+        
+        $lblStatus.Text = "HandBrake ready - Ready to convert"
+        $lblStatus.ForeColor = $c.Green
+        
+    } catch {
+        $lblStatus.Text = "HandBrake download failed: $($_.Exception.Message)"
+        $lblStatus.ForeColor = [Drawing.Color]::FromArgb(231,76,60) # Red
+        [Windows.Forms.MessageBox]::Show("Failed to download HandBrake:`n$($_.Exception.Message)`n`nYou can manually download from:`nhttps://handbrake.fr/downloads.php", 'Download Error', 'OK', 'Error')
+    }
+}
+
+# Start HandBrake check on form load
+$form.Add_Shown({
+    Download-HandBrake
 })
 
 # ===================================
