@@ -503,58 +503,52 @@ function Download-HandBrake {
         return
     }
     
-    $lblStatus.Text = "Checking HandBrake..."
-    $lblStatus.ForeColor = $c.TextMuted
-    
-    # Show in main window status
-    $lblStatus.Text = "Downloading HandBrake CLI (15 MB)... Please wait"
-    $lblStatus.ForeColor = [Drawing.Color]::FromArgb(255,165,0) # Orange
-    $form.Refresh()
-    
     $zipPath = Join-Path $Bin 'handbrake.zip'
     
     try {
-        # Download with progress
-        $wc = New-Object System.Net.WebClient
+        $lblStatus.Text = "Downloading HandBrake CLI (15 MB)..."
+        $lblStatus.ForeColor = [Drawing.Color]::FromArgb(255,165,0)
+        $form.Refresh()
+        [Windows.Forms.Application]::DoEvents()
         
-        # Simple progress in status bar
-        $script:lastUpdate = [DateTime]::Now
-        $wc.DownloadProgressChanged = {
-            param($sender, $e)
-            # Update every 500ms to avoid flooding
-            if(([DateTime]::Now - $script:lastUpdate).TotalMilliseconds -gt 500) {
-                $downloaded = [math]::Round($e.BytesReceived / 1MB, 1)
-                $total = [math]::Round($e.TotalBytesToReceive / 1MB, 1)
-                $lblStatus.Text = "Downloading HandBrake: $downloaded MB / $total MB ($($e.ProgressPercentage)%)"
-                $form.Refresh()
-                [Windows.Forms.Application]::DoEvents()
-                $script:lastUpdate = [DateTime]::Now
+        # Simple synchronous download with manual chunks
+        $req = [System.Net.HttpWebRequest]::Create($HandBrakeUrl)
+        $response = $req.GetResponse()
+        $totalBytes = $response.ContentLength
+        $responseStream = $response.GetResponseStream()
+        
+        $buffer = New-Object byte[] 8192
+        $fileStream = [System.IO.File]::Create($zipPath)
+        $totalRead = 0
+        $lastPercent = -1
+        
+        do {
+            $read = $responseStream.Read($buffer, 0, $buffer.Length)
+            $fileStream.Write($buffer, 0, $read)
+            $totalRead += $read
+            
+            if($totalBytes -gt 0) {
+                $percent = [math]::Floor(($totalRead / $totalBytes) * 100)
+                if($percent -ne $lastPercent) {
+                    $downloadedMB = [math]::Round($totalRead / 1MB, 1)
+                    $totalMB = [math]::Round($totalBytes / 1MB, 1)
+                    $lblStatus.Text = "Downloading HandBrake: $downloadedMB MB / $totalMB MB ($percent%)"
+                    $form.Refresh()
+                    [Windows.Forms.Application]::DoEvents()
+                    $lastPercent = $percent
+                }
             }
-        }
+        } while ($read -gt 0)
         
-        Register-ObjectEvent -InputObject $wc -EventName DownloadProgressChanged -Action {
-            $downloaded = [math]::Round($Event.SourceEventArgs.BytesReceived / 1MB, 1)
-            $total = [math]::Round($Event.SourceEventArgs.TotalBytesToReceive / 1MB, 1)
-            $percent = $Event.SourceEventArgs.ProgressPercentage
-            Write-Host "Downloading: $downloaded MB / $total MB ($percent%)" -ForegroundColor Cyan
-        } | Out-Null
-        
-        # Start download
-        $wc.DownloadFileAsync($HandBrakeUrl, $zipPath)
-        
-        # Wait for completion
-        while($wc.IsBusy) {
-            [Windows.Forms.Application]::DoEvents()
-            Start-Sleep -Milliseconds 100
-        }
-        
-        # Cleanup events
-        Get-EventSubscriber | Where-Object { $_.SourceObject -eq $wc } | Unregister-Event
+        $fileStream.Close()
+        $responseStream.Close()
+        $response.Close()
         
         # Extract
         $lblStatus.Text = "Extracting HandBrake..."
         $lblStatus.ForeColor = [Drawing.Color]::FromArgb(255,165,0)
         $form.Refresh()
+        [Windows.Forms.Application]::DoEvents()
         
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $Bin)
@@ -565,8 +559,8 @@ function Download-HandBrake {
         $lblStatus.ForeColor = $c.Green
         
     } catch {
-        $lblStatus.Text = "HandBrake download failed: $($_.Exception.Message)"
-        $lblStatus.ForeColor = [Drawing.Color]::FromArgb(231,76,60) # Red
+        $lblStatus.Text = "HandBrake download failed"
+        $lblStatus.ForeColor = [Drawing.Color]::FromArgb(231,76,60)
         [Windows.Forms.MessageBox]::Show("Failed to download HandBrake:`n$($_.Exception.Message)`n`nYou can manually download from:`nhttps://handbrake.fr/downloads.php", 'Download Error', 'OK', 'Error')
     }
 }
