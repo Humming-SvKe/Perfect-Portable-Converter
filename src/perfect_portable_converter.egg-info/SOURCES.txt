@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+src/perfect_portable_converter.egg-info/PKG-INFO
+src/perfect_portable_converter.egg-info/SOURCES.txt
+src/perfect_portable_converter.egg-info/dependency_links.txt
+src/perfect_portable_converter.egg-info/entry_points.txt
+src/perfect_portable_converter.egg-info/top_level.txt
+src/ppc/__init__.py
+src/ppc/cli.py
+tests/test_cli.py

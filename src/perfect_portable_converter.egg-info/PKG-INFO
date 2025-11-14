@@ -1,0 +1,31 @@
+Metadata-Version: 2.4
+Name: perfect-portable-converter
+Version: 0.1.0
+Summary: Minimal scaffold for a portable converter CLI
+Author: Humming-SvKe
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# Perfect-Portable-Converter
+
+Jednoduché, rozšíriteľné CLI na konverziu textových súborov.
+
+Rýchly štart:
+1) Lokálne (Linux/macOS):
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -e .
+   ppc --help
+
+2) Príklad:
+   ppc convert --input sample.txt --output out.txt --op uppercase
+
+Testy:
+   pip install pytest
+   pytest -q
+
+Popis:
+- CLI `ppc` s príkazom `convert` podporuje operácie: uppercase, lowercase, replace (regex).
+- Projekt používa pyproject.toml a entry-point `ppc = "ppc.cli:main".
