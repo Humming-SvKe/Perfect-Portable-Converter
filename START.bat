@@ -22,12 +22,12 @@ del /F /Q "%~dp0VERIFY-VERSION.ps1" 2>nul
 
 echo.
 echo ========================================
-echo  Apowersoft Video Converter Studio
-echo  Dark Theme - Starting...
+echo  Perfect Portable Converter
+echo  HandBrake Style GUI - Starting...
 echo ========================================
 echo.
 
-set "GUI=%~dp0PPC-GUI-Dark.ps1"
+set "GUI=%~dp0PerfectConverter.ps1"
 
 if not exist "%GUI%" (
     echo ERROR: Dark theme GUI file not found!
