@@ -16,8 +16,6 @@ echo.
 powershell.exe -ExecutionPolicy Bypass -File "%~dp0PerfectConverter.ps1"
 
 if errorlevel 1 (
-    echo.
     echo ERROR: Failed to start GUI
-    echo.
     pause
 )
