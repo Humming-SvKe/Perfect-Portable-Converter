@@ -1,5 +1,5 @@
 <#
-  PPC-HandBrake.ps1
+  PerfectConverter.ps1
   A HandBrake-based converter that supports optional image watermarks and subtitle burn-in
   Workflow:
    - If a watermark image or subtitle needs burning, use bundled ffmpeg to create a temporary preprocessed input
@@ -22,7 +22,7 @@ $Ovls  = Join-Path $Root "overlays"
 $Cfg   = Join-Path $Root "config\defaults.json"
 
 $null = New-Item -ItemType Directory -Force -Path $Bins,$Logs,$Temp,$In,$Out,$Subs,$Ovls | Out-Null
-$LogFile = Join-Path $Logs "ppc-handbrake.log"
+$LogFile = Join-Path $Logs "perfectconverter.log"
 
 function Write-Log([string]$m){
   $ts=(Get-Date).ToString("yyyy-MM-dd HH:mm:ss"); "$ts | $m" | Out-File -Append -Encoding UTF8 $LogFile; Write-Host $m -ForegroundColor Cyan
@@ -182,7 +182,7 @@ function Choose-Profile {
 function Run-FF([string[]]$Args){
   $ff = Resolve-FFTools
   if (-not $ff) { throw "ffmpeg not available" }
-  $ffLog = Join-Path $Logs "ffmpeg-handbrake.log"
+  $ffLog = Join-Path $Logs "ffmpeg.log"
   Write-Info ("Running: ffmpeg " + ($Args -join ' '))
   
   # Run ffmpeg with live output (shows progress)
@@ -346,7 +346,7 @@ function Main-Menu {
 }
 
 Write-Host "`n"
-Write-Success "PPC-HandBrake started successfully!"
+Write-Success "Perfect Portable Converter started successfully!"
 Write-Info "Logs: $LogFile"
 Write-Host "`n"
 
