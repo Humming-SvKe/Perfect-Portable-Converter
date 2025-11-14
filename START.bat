@@ -30,7 +30,7 @@ echo.
 set "GUI=%~dp0PerfectConverter.ps1"
 
 if not exist "%GUI%" (
-    echo ERROR: Dark theme GUI file not found!
+    echo ERROR: HandBrake Style GUI file not found!
     echo Expected: %GUI%
     pause
     exit /b 1
@@ -39,8 +39,8 @@ if not exist "%GUI%" (
 REM Kill cached PowerShell
 taskkill /F /IM powershell.exe >nul 2>&1
 
-:: Launch Dark Theme GUI
-powershell -NoProfile -ExecutionPolicy Bypass -STA -File "%~dp0PPC-GUI-Dark.ps1"
+:: Launch HandBrake Style GUI
+powershell -NoProfile -ExecutionPolicy Bypass -STA -File "%~dp0PerfectConverter.ps1"
 
 REM If we reach here, the GUI exited or failed
 if errorlevel 1 (

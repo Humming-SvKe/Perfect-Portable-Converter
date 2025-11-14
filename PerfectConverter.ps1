@@ -122,6 +122,17 @@ $trackQuality.Value = 23
 $trackQuality.TickFrequency = 5
 $tabVideo.Controls.Add($trackQuality)
 
+$lblQualityValue = New-Object System.Windows.Forms.Label
+$lblQualityValue.Text = "23"
+$lblQualityValue.Location = New-Object System.Drawing.Point(540, 60)
+$lblQualityValue.Size = New-Object System.Drawing.Size(50, 20)
+$lblQualityValue.ForeColor = [System.Drawing.Color]::White
+$tabVideo.Controls.Add($lblQualityValue)
+
+$trackQuality.Add_ValueChanged({
+    $lblQualityValue.Text = $trackQuality.Value.ToString()
+})
+
 # Audio tab content
 $lblAudioCodec = New-Object System.Windows.Forms.Label
 $lblAudioCodec.Text = "Audio Codec:"
@@ -178,6 +189,17 @@ $trackOpacity.Maximum = 100
 $trackOpacity.Value = 100
 $trackOpacity.TickFrequency = 10
 $tabFilters.Controls.Add($trackOpacity)
+
+$lblOpacityValue = New-Object System.Windows.Forms.Label
+$lblOpacityValue.Text = "100%"
+$lblOpacityValue.Location = New-Object System.Drawing.Point(540, 60)
+$lblOpacityValue.Size = New-Object System.Drawing.Size(50, 20)
+$lblOpacityValue.ForeColor = [System.Drawing.Color]::White
+$tabFilters.Controls.Add($lblOpacityValue)
+
+$trackOpacity.Add_ValueChanged({
+    $lblOpacityValue.Text = "$($trackOpacity.Value)%"
+})
 
 $tabControl.Controls.Add($tabSummary)
 $tabControl.Controls.Add($tabVideo)
