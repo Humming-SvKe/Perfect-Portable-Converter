@@ -1,59 +1,43 @@
 @echo off
 REM ========================================
-REM  Professional Portable Converter
-REM  Clean installation - removes old versions
+REM  Perfect Portable Converter
+REM  HandBrake-based video converter
 REM ========================================
 
-echo Cleaning up old GUI versions...
-
-REM Remove all old GUI versions
-del /F /Q "%~dp0PPC-GUI.ps1" 2>nul
-del /F /Q "%~dp0PPC-GUI-Modern.ps1" 2>nul
-del /F /Q "%~dp0PPC-GUI-Modern.ps1.backup" 2>nul
-del /F /Q "%~dp0PPC-GUI-Modern-v2.ps1" 2>nul
-del /F /Q "%~dp0PPC-GUI-Modern-v3.ps1" 2>nul
-del /F /Q "%~dp0PPC-GUI-Ultimate.ps1" 2>nul
-del /F /Q "%~dp0PPC-GUI-Ultimate-v2.ps1" 2>nul
-del /F /Q "%~dp0PPC-GUI-Ultimate-v3.ps1" 2>nul
-del /F /Q "%~dp0PPC-GUI-Final.ps1" 2>nul
-del /F /Q "%~dp0PPC-GUI-Modern-Clean.ps1" 2>nul
-del /F /Q "%~dp0TEST-ULTIMATE-V2.ps1" 2>nul
-del /F /Q "%~dp0VERIFY-VERSION.ps1" 2>nul
-
 echo.
 echo ========================================
-echo  Apowersoft Video Converter Studio
-echo  Dark Theme - Starting...
+echo  Perfect Portable Converter
+echo  Starting HandBrake Converter...
 echo ========================================
 echo.
 
-set "GUI=%~dp0PPC-GUI-Dark.ps1"
+set "CONVERTER=%~dp0PerfectConverter.ps1"
 
-if not exist "%GUI%" (
-    echo ERROR: Dark theme GUI file not found!
-    echo Expected: %GUI%
+if not exist "%CONVERTER%" (
+    echo ERROR: PerfectConverter.ps1 not found!
+    echo Expected: %CONVERTER%
     pause
     exit /b 1
 )
 
-REM Kill cached PowerShell
+REM Kill cached PowerShell instances
 taskkill /F /IM powershell.exe >nul 2>&1
 
-:: Launch Dark Theme GUI
-powershell -NoProfile -ExecutionPolicy Bypass -STA -File "%~dp0PPC-GUI-Dark.ps1"
+REM Launch Perfect Converter
+powershell -NoProfile -ExecutionPolicy Bypass -File "%CONVERTER%"
 
-REM If we reach here, the GUI exited or failed
+REM Check exit status
 if errorlevel 1 (
     echo.
     echo ========================================
-    echo  ERROR: GUI failed to start!
+    echo  ERROR: Converter failed to start!
     echo ========================================
     echo.
     echo Trying to display error details...
     echo.
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "& { try { . '%GUI%' } catch { Write-Host 'ERROR:' $_.Exception.Message -ForegroundColor Red; Write-Host 'LINE:' $_.InvocationInfo.ScriptLineNumber -ForegroundColor Yellow; pause } }"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "& { try { . '%CONVERTER%' } catch { Write-Host 'ERROR:' $_.Exception.Message -ForegroundColor Red; Write-Host 'LINE:' $_.InvocationInfo.ScriptLineNumber -ForegroundColor Yellow; pause } }"
     pause
 ) else (
-    echo GUI closed normally.
+    echo Converter closed normally.
     timeout /t 2 >nul
 )
