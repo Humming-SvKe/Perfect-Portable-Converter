@@ -22,15 +22,15 @@ del /F /Q "%~dp0VERIFY-VERSION.ps1" 2>nul
 
 echo.
 echo ========================================
-echo  Apowersoft Video Converter Studio
-echo  Dark Theme - Starting...
+echo  Perfect Portable Converter
+echo  HandBrake-style GUI - Starting...
 echo ========================================
 echo.
 
-set "GUI=%~dp0PPC-GUI-Dark.ps1"
+set "GUI=%~dp0PerfectConverter.ps1"
 
 if not exist "%GUI%" (
-    echo ERROR: Dark theme GUI file not found!
+    echo ERROR: PerfectConverter.ps1 not found!
     echo Expected: %GUI%
     pause
     exit /b 1
@@ -39,8 +39,8 @@ if not exist "%GUI%" (
 REM Kill cached PowerShell
 taskkill /F /IM powershell.exe >nul 2>&1
 
-:: Launch Dark Theme GUI
-powershell -NoProfile -ExecutionPolicy Bypass -STA -File "%~dp0PPC-GUI-Dark.ps1"
+:: Launch GUI
+powershell -NoProfile -ExecutionPolicy Bypass -STA -File "%~dp0PerfectConverter.ps1"
 
 REM If we reach here, the GUI exited or failed
 if errorlevel 1 (
